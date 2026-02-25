@@ -15,7 +15,8 @@ const PORT = process.env.PORT || 8000;
 
 connectDB();
 
-app.use(cors({ origin: 'http://localhost:5173' }));
+app.use(cors({ origin: ['http://localhost:5173', 'https://faith-grace-catering.vercel.app'] }));
+
 app.use(express.json());
 
 app.use('/api/auth',   authRoutes);
