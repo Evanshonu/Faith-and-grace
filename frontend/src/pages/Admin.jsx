@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, UtensilsCrossed, ShoppingBag, History,
@@ -62,36 +62,33 @@ const blurReset = e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; }
 
 /* ─── LOGIN PAGE ─────────────────────────────────────────────────────── */
 const LoginPage = ({ onLogin }) => {
-  const [pw, setPw]           = useState('');
-  const [show, setShow]       = useState(false);
-  const [error, setError]     = useState('');
+  const [pw, setPw]         = useState('');
+  const [show, setShow]     = useState(false);
+  const [error, setError]   = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-  setLoading(true);
-  setError('');
-  try {
-    const res = await fetch('http://localhost:8000/api/auth/login', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({ password: pw }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      setError(data.error || 'Invalid credentials');
+    setLoading(true);
+    setError('');
+    try {
+      const res  = await fetch('http://localhost:8000/api/auth/login', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ password: pw }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Incorrect password.');
+        setLoading(false);
+        return;
+      }
+      localStorage.setItem('fg_admin_token', data.token);
+      onLogin();
+    } catch {
+      setError('Could not connect to server. Is the backend running?');
       setLoading(false);
-      return;
     }
-
-    localStorage.setItem('fg_admin_token', data.token);
-    onLogin();
-  } catch {
-    setError('Could not connect to server. Is the backend running?');
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <div
@@ -104,15 +101,17 @@ const LoginPage = ({ onLogin }) => {
         transition={{ duration: 0.6 }}
         className="w-full max-w-sm"
       >
+        {/* Brand */}
         <div className="text-center mb-10">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
             style={{ background: 'linear-gradient(135deg,#c0392b,#e67e22)' }}>
             <UtensilsCrossed size={28} className="text-white" />
           </div>
-          <h1 className="font-corm text-3xl font-bold text-white mb-1">Faith & Grace</h1>
+          <h1 className="font-corm text-3xl font-bold text-white mb-1">Faith &amp; Grace</h1>
           <p className="text-xs tracking-widest uppercase" style={{ color: '#ff9a3c' }}>Owner Dashboard</p>
         </div>
 
+        {/* Card */}
         <div className="rounded-2xl p-8"
           style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', backdropFilter: 'blur(12px)' }}>
           <p className="text-stone-400 text-sm mb-6 text-center">Enter your password to access the dashboard</p>
@@ -178,7 +177,8 @@ const StatCard = ({ icon: Icon, label, value, sub, color }) => (
     style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
   >
     <div className="mb-4">
-      <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${color}22` }}>
+      <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+        style={{ background: `${color}22` }}>
         <Icon size={20} style={{ color }} />
       </div>
     </div>
@@ -212,7 +212,9 @@ const MenuFormModal = ({ item, onSave, onClose }) => {
         className="w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl"
         style={{ background: '#1a1210', border: '1px solid rgba(255,255,255,0.1)' }}
       >
-        <div className="flex items-center justify-between px-7 py-5 border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-7 py-5 border-b"
+          style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
           <div>
             <div className="font-corm text-2xl font-bold text-white">{item ? 'Edit Dish' : 'Add New Dish'}</div>
             <div className="text-xs text-stone-500 mt-0.5">{item ? `Editing — ${item.name}` : 'Fill in the details below'}</div>
@@ -224,7 +226,10 @@ const MenuFormModal = ({ item, onSave, onClose }) => {
           </button>
         </div>
 
+        {/* Body */}
         <div className="p-7 flex flex-col gap-5 max-h-[70vh] overflow-y-auto hide-scroll">
+
+          {/* Image URL */}
           <div>
             <label className="text-xs font-black tracking-widest uppercase text-stone-500 block mb-2">Image URL</label>
             <div className="flex gap-3">
@@ -246,6 +251,7 @@ const MenuFormModal = ({ item, onSave, onClose }) => {
             </div>
           </div>
 
+          {/* Name */}
           <div>
             <label className="text-xs font-black tracking-widest uppercase text-stone-500 block mb-2">Dish Name *</label>
             <input
@@ -258,6 +264,7 @@ const MenuFormModal = ({ item, onSave, onClose }) => {
             />
           </div>
 
+          {/* Price + Category */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-black tracking-widest uppercase text-stone-500 block mb-2">Price ($) *</label>
@@ -284,6 +291,7 @@ const MenuFormModal = ({ item, onSave, onClose }) => {
             </div>
           </div>
 
+          {/* Description */}
           <div>
             <label className="text-xs font-black tracking-widest uppercase text-stone-500 block mb-2">Description *</label>
             <textarea
@@ -297,6 +305,7 @@ const MenuFormModal = ({ item, onSave, onClose }) => {
             />
           </div>
 
+          {/* Availability toggle */}
           <div className="flex items-center justify-between p-4 rounded-xl"
             style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
             <div>
@@ -311,6 +320,7 @@ const MenuFormModal = ({ item, onSave, onClose }) => {
           </div>
         </div>
 
+        {/* Footer */}
         <div className="flex gap-3 px-7 py-5 border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
           <button
             onClick={onClose}
@@ -388,6 +398,7 @@ const OrderCard = ({ order, onStatusChange, isPast }) => {
       className="rounded-2xl overflow-hidden"
       style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
     >
+      {/* Summary row */}
       <div className="flex items-center gap-4 p-5 cursor-pointer" onClick={() => setExpanded(e => !e)}>
         <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-black text-sm shrink-0"
           style={{ background: 'linear-gradient(135deg,#c0392b,#e67e22)' }}>
@@ -396,7 +407,7 @@ const OrderCard = ({ order, onStatusChange, isPast }) => {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-black text-sm text-white">{order.customer}</span>
-            <span className="text-xs text-stone-500">{order.id}</span>
+            <span className="text-xs text-stone-500">{order._id || order.id}</span>
           </div>
           <div className="text-xs text-stone-500 mt-0.5">
             {order.phone} · {order.method === 'pickup' ? '🏃 Pickup' : '🚗 Delivery'} · {order.time}
@@ -412,6 +423,7 @@ const OrderCard = ({ order, onStatusChange, isPast }) => {
         </div>
       </div>
 
+      {/* Expanded items */}
       <AnimatePresence>
         {expanded && (
           <motion.div
@@ -435,9 +447,10 @@ const OrderCard = ({ order, onStatusChange, isPast }) => {
                   <span className="font-black text-white">${order.total.toFixed(2)}</span>
                 </div>
               </div>
+
               {!isPast && nextStatus && (
                 <button
-                  onClick={() => onStatusChange(order.id, nextStatus)}
+                  onClick={() => onStatusChange(order._id || order.id, nextStatus)}
                   className="w-full py-2.5 rounded-xl font-black text-xs tracking-widest uppercase text-white transition-all hover:-translate-y-0.5"
                   style={{ background: 'linear-gradient(135deg,#c0392b,#e67e22)', boxShadow: '0 3px 14px rgba(192,57,43,0.35)' }}
                 >
@@ -453,15 +466,36 @@ const OrderCard = ({ order, onStatusChange, isPast }) => {
 };
 
 /* ─── MAIN DASHBOARD ─────────────────────────────────────────────────── */
+const API_ADMIN = 'http://localhost:8000';
+
 const Dashboard = ({ onLogout }) => {
   const [tab,        setTab]        = useState('overview');
-  const [menu,       setMenu]       = useState(INITIAL_MENU);
-  const [orders,     setOrders]     = useState(INITIAL_ORDERS);
+  const [menu,       setMenu]       = useState([]);
+  const [orders,     setOrders]     = useState([]);
   const [editItem,   setEditItem]   = useState(null);
   const [showForm,   setShowForm]   = useState(false);
   const [deleteItem, setDeleteItem] = useState(null);
   const [search,     setSearch]     = useState('');
   const [catFilter,  setCatFilter]  = useState('All');
+
+  const token = localStorage.getItem('fg_admin_token');
+  const authH = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [mRes, oRes] = await Promise.all([
+          fetch(`${API_ADMIN}/api/menu`),
+          fetch(`${API_ADMIN}/api/orders`, { headers: authH }),
+        ]);
+        const mData = await mRes.json();
+        const oData = await oRes.json();
+        setMenu(Array.isArray(mData) ? mData : []);
+        setOrders(Array.isArray(oData) ? oData : []);
+      } catch (err) { console.error('Load failed:', err); }
+    };
+    load();
+  }, []);
 
   const activeOrders = orders.filter(o => o.status !== 'delivered');
   const pastOrders   = orders.filter(o => o.status === 'delivered');
@@ -472,38 +506,55 @@ const Dashboard = ({ onLogout }) => {
     name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleSave = data => {
-    setMenu(m => editItem
-      ? m.map(i => i.id === data.id ? data : i)
-      : [...m, data]
-    );
+  const handleSave = async data => {
+    try {
+      const isEdit = !!editItem;
+      const url    = isEdit ? `${API_ADMIN}/api/menu/${editItem._id}` : `${API_ADMIN}/api/menu`;
+      const res    = await fetch(url, { method: isEdit ? 'PUT' : 'POST', headers: authH, body: JSON.stringify(data) });
+      const saved  = await res.json();
+      setMenu(m => isEdit ? m.map(i => i._id === saved._id ? saved : i) : [...m, saved]);
+    } catch (err) { console.error('Save failed:', err); }
     setShowForm(false);
     setEditItem(null);
   };
 
-  const handleDelete = () => {
-    setMenu(m => m.filter(i => i.id !== deleteItem.id));
+  const handleDelete = async () => {
+    try {
+      await fetch(`${API_ADMIN}/api/menu/${deleteItem._id}`, { method: 'DELETE', headers: authH });
+      setMenu(m => m.filter(i => i._id !== deleteItem._id));
+    } catch (err) { console.error('Delete failed:', err); }
     setDeleteItem(null);
   };
 
-  const handleStatusChange = (id, newStatus) =>
-    setOrders(o => o.map(ord => ord.id === id ? { ...ord, status: newStatus } : ord));
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      await fetch(`${API_ADMIN}/api/orders/${id}`, {
+        method: 'PATCH', headers: authH,
+        body: JSON.stringify({ status: newStatus }),
+      });
+      setOrders(o => o.map(ord => (ord._id === id ? { ...ord, status: newStatus } : ord)));
+    } catch (err) { console.error('Status update failed:', err); }
+  };
 
   const openEdit  = item => { setEditItem(item); setShowForm(true); };
   const openAdd   = ()   => { setEditItem(null); setShowForm(true); };
   const closeForm = ()   => { setShowForm(false); setEditItem(null); };
 
-  const tabCounts = { menu: menu.length, orders: activeOrders.length, past: pastOrders.length };
-
-  const TAB_TITLES = { overview: 'Dashboard Overview', menu: 'Menu Management', orders: 'Active Orders', past: 'Past Orders' };
+  const tabCounts = {
+    menu:   menu.length,
+    orders: activeOrders.length,
+    past:   pastOrders.length,
+  };
 
   return (
     <div className="min-h-screen flex" style={{ background: '#0d0805', fontFamily: "'Lato',sans-serif" }}>
 
       {/* ── SIDEBAR ── */}
-      <aside className="w-64 shrink-0 flex flex-col border-r"
-        style={{ background: '#110a07', borderColor: 'rgba(255,255,255,0.07)' }}>
-
+      <aside
+        className="w-64 shrink-0 flex flex-col border-r"
+        style={{ background: '#110a07', borderColor: 'rgba(255,255,255,0.07)' }}
+      >
+        {/* Brand */}
         <div className="px-6 py-7 border-b" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
@@ -511,12 +562,13 @@ const Dashboard = ({ onLogout }) => {
               <UtensilsCrossed size={18} className="text-white" />
             </div>
             <div>
-              <div className="font-corm text-lg font-bold text-white leading-none">Faith & Grace</div>
+              <div className="font-corm text-lg font-bold text-white leading-none">Faith &amp; Grace</div>
               <div className="text-xs mt-0.5" style={{ color: '#ff9a3c' }}>Owner Panel</div>
             </div>
           </div>
         </div>
 
+        {/* Nav */}
         <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
           {TABS.map(({ key, label, icon: Icon }) => {
             const active = tab === key;
@@ -530,8 +582,13 @@ const Dashboard = ({ onLogout }) => {
                 <Icon size={18} style={active ? { color: '#ff9a3c' } : {}} />
                 <span className="flex-1">{label}</span>
                 {tabCounts[key] !== undefined && (
-                  <span className="text-xs px-2 py-0.5 rounded-full font-black"
-                    style={{ background: active ? 'rgba(255,154,60,0.2)' : 'rgba(255,255,255,0.07)', color: active ? '#ff9a3c' : '#666' }}>
+                  <span
+                    className="text-xs px-2 py-0.5 rounded-full font-black"
+                    style={{
+                      background: active ? 'rgba(255,154,60,0.2)' : 'rgba(255,255,255,0.07)',
+                      color: active ? '#ff9a3c' : '#666',
+                    }}
+                  >
                     {tabCounts[key]}
                   </span>
                 )}
@@ -540,6 +597,7 @@ const Dashboard = ({ onLogout }) => {
           })}
         </nav>
 
+        {/* Logout */}
         <div className="px-3 pb-5 pt-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
           <button
             onClick={onLogout}
@@ -553,10 +611,15 @@ const Dashboard = ({ onLogout }) => {
       {/* ── MAIN ── */}
       <main className="flex-1 overflow-y-auto hide-scroll">
 
-        <div className="sticky top-0 z-30 flex items-center justify-between px-8 py-5 border-b"
-          style={{ background: 'rgba(13,8,5,0.9)', borderColor: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(12px)' }}>
+        {/* Sticky header */}
+        <div
+          className="sticky top-0 z-30 flex items-center justify-between px-8 py-5 border-b"
+          style={{ background: 'rgba(13,8,5,0.9)', borderColor: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(12px)' }}
+        >
           <div>
-            <h1 className="font-corm text-2xl font-bold text-white">{TAB_TITLES[tab]}</h1>
+            <h1 className="font-corm text-2xl font-bold text-white">
+              {{ overview: 'Dashboard Overview', menu: 'Menu Management', orders: 'Active Orders', past: 'Past Orders' }[tab]}
+            </h1>
             <p className="text-xs text-stone-500 mt-0.5">
               {tab === 'overview' && 'Your restaurant at a glance'}
               {tab === 'menu'     && `${menu.length} dishes · ${menu.filter(i => i.available).length} available`}
@@ -581,12 +644,13 @@ const Dashboard = ({ onLogout }) => {
           {tab === 'overview' && (
             <div className="flex flex-col gap-8">
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard icon={DollarSign}      label="Total Revenue"    value={`$${totalRevenue.toFixed(0)}`}  sub="From past orders"                              color="#22c55e" />
-                <StatCard icon={ShoppingBag}     label="Active Orders"    value={activeOrders.length}            sub="Needs attention"                               color="#f59e0b" />
-                <StatCard icon={UtensilsCrossed} label="Menu Items"       value={menu.length}                    sub={`${menu.filter(i => i.available).length} available`} color="#3b82f6" />
-                <StatCard icon={History}         label="Orders Completed" value={pastOrders.length}              sub="All time"                                      color="#a855f7" />
+                <StatCard icon={DollarSign}      label="Total Revenue"    value={`$${totalRevenue.toFixed(0)}`}           sub="From past orders"                             color="#22c55e" />
+                <StatCard icon={ShoppingBag}     label="Active Orders"    value={activeOrders.length}                     sub="Needs attention"                              color="#f59e0b" />
+                <StatCard icon={UtensilsCrossed} label="Menu Items"       value={menu.length}                             sub={`${menu.filter(i => i.available).length} available`} color="#3b82f6" />
+                <StatCard icon={History}         label="Orders Completed" value={pastOrders.length}                       sub="All time"                                     color="#a855f7" />
               </div>
 
+              {/* Recent active orders */}
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="font-corm text-xl font-bold text-white">Active Orders</h2>
@@ -599,11 +663,14 @@ const Dashboard = ({ onLogout }) => {
                   </div>
                 ) : (
                   <div className="flex flex-col gap-3">
-                    {activeOrders.slice(0, 3).map(o => <OrderCard key={o.id} order={o} onStatusChange={handleStatusChange} isPast={false} />)}
+                    {activeOrders.slice(0, 3).map(o => (
+                      <OrderCard key={o._id || o.id} order={o} onStatusChange={handleStatusChange} isPast={false} />
+                    ))}
                   </div>
                 )}
               </div>
 
+              {/* Menu availability quick view */}
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="font-corm text-xl font-bold text-white">Menu Availability</h2>
@@ -630,6 +697,7 @@ const Dashboard = ({ onLogout }) => {
           {/* ════ MENU CRUD ════ */}
           {tab === 'menu' && (
             <div>
+              {/* Filters */}
               <div className="flex gap-3 mb-6 flex-wrap items-center">
                 <div className="relative">
                   <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500" />
@@ -643,24 +711,32 @@ const Dashboard = ({ onLogout }) => {
                 </div>
                 <div className="flex gap-2 flex-wrap">
                   {['All', ...CATEGORIES].map(c => (
-                    <button key={c} onClick={() => setCatFilter(c)}
+                    <button
+                      key={c}
+                      onClick={() => setCatFilter(c)}
                       className={`px-4 py-2 rounded-xl text-xs font-black tracking-wider uppercase transition-all ${catFilter === c ? 'text-white' : 'text-stone-500 hover:text-stone-300'}`}
                       style={catFilter === c
                         ? { background: 'rgba(192,57,43,0.25)', border: '1px solid rgba(192,57,43,0.4)' }
-                        : { border: '1px solid rgba(255,255,255,0.07)' }}>
+                        : { border: '1px solid rgba(255,255,255,0.07)' }}
+                    >
                       {c}
                     </button>
                   ))}
                 </div>
               </div>
 
+              {/* Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 <AnimatePresence mode="popLayout">
                   {filteredMenu.map(item => (
-                    <motion.div key={item.id} layout
-                      initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+                    <motion.div
+                      key={item._id || item.id} layout
+                      initial={{ opacity: 0, scale: 0.97 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
                       className="rounded-2xl overflow-hidden"
-                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+                    >
                       <div className="relative h-40 overflow-hidden">
                         <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                         <div className="absolute inset-0" style={{ background: 'linear-gradient(to top,rgba(13,8,5,0.8),transparent 60%)' }} />
@@ -683,21 +759,29 @@ const Dashboard = ({ onLogout }) => {
                       <div className="p-4">
                         <p className="text-stone-500 text-xs leading-relaxed mb-4 line-clamp-2">{item.desc}</p>
                         <div className="flex gap-2">
+                          {/* Toggle availability */}
                           <button
                             onClick={() => setMenu(m => m.map(i => i.id === item.id ? { ...i, available: !i.available } : i))}
                             className={`flex items-center gap-1.5 flex-1 py-2 rounded-xl text-xs font-black uppercase transition-all justify-center ${item.available ? 'text-green-400 hover:bg-green-500/10' : 'text-red-400 hover:bg-red-500/10'}`}
-                            style={{ border: item.available ? '1px solid rgba(34,197,94,0.25)' : '1px solid rgba(239,68,68,0.25)' }}>
+                            style={{ border: item.available ? '1px solid rgba(34,197,94,0.25)' : '1px solid rgba(239,68,68,0.25)' }}
+                          >
                             {item.available ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
                             {item.available ? 'On' : 'Off'}
                           </button>
-                          <button onClick={() => openEdit(item)}
+                          {/* Edit */}
+                          <button
+                            onClick={() => openEdit(item)}
                             className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black uppercase text-stone-400 hover:text-white transition-all"
-                            style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
+                            style={{ border: '1px solid rgba(255,255,255,0.1)' }}
+                          >
                             <Pencil size={13} /> Edit
                           </button>
-                          <button onClick={() => setDeleteItem(item)}
+                          {/* Delete */}
+                          <button
+                            onClick={() => setDeleteItem(item)}
                             className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black text-stone-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
-                            style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
+                            style={{ border: '1px solid rgba(255,255,255,0.07)' }}
+                          >
                             <Trash2 size={13} />
                           </button>
                         </div>
@@ -721,14 +805,18 @@ const Dashboard = ({ onLogout }) => {
               ) : (
                 <>
                   <div className="flex gap-3 flex-wrap mb-2">
-                    {Object.entries(STATUS_CONFIG).filter(([k]) => k !== 'delivered').map(([key, cfg]) => (
-                      <div key={key} className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-black ${cfg.color}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-                        {cfg.label} · {activeOrders.filter(o => o.status === key).length}
-                      </div>
-                    ))}
+                    {Object.entries(STATUS_CONFIG)
+                      .filter(([k]) => k !== 'delivered')
+                      .map(([key, cfg]) => (
+                        <div key={key} className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-black ${cfg.color}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
+                          {cfg.label} · {activeOrders.filter(o => o.status === key).length}
+                        </div>
+                      ))}
                   </div>
-                  {activeOrders.map(o => <OrderCard key={o.id} order={o} onStatusChange={handleStatusChange} isPast={false} />)}
+                  {activeOrders.map(o => (
+                    <OrderCard key={o._id || o.id} order={o} onStatusChange={handleStatusChange} isPast={false} />
+                  ))}
                 </>
               )}
             </div>
@@ -739,9 +827,9 @@ const Dashboard = ({ onLogout }) => {
             <div>
               <div className="grid grid-cols-3 gap-4 mb-6">
                 {[
-                  { value: `$${totalRevenue.toFixed(2)}`,                                                    label: 'Total Earned',     color: 'text-green-400'    },
-                  { value: pastOrders.length,                                                                 label: 'Orders Delivered', color: 'text-white'        },
-                  { value: `$${pastOrders.length ? (totalRevenue / pastOrders.length).toFixed(2) : '0.00'}`, label: 'Avg. Order Value', color: 'text-[#ff9a3c]'   },
+                  { value: `$${totalRevenue.toFixed(2)}`,                                              label: 'Total Earned',       color: 'text-green-400' },
+                  { value: pastOrders.length,                                                           label: 'Orders Delivered',   color: 'text-white'     },
+                  { value: `$${pastOrders.length ? (totalRevenue / pastOrders.length).toFixed(2) : '0.00'}`, label: 'Avg. Order Value', color: 'text-[#ff9a3c]' },
                 ].map(({ value, label, color }) => (
                   <div key={label} className="rounded-2xl p-5 text-center"
                     style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
@@ -751,7 +839,9 @@ const Dashboard = ({ onLogout }) => {
                 ))}
               </div>
               <div className="flex flex-col gap-3">
-                {pastOrders.map(o => <OrderCard key={o.id} order={o} onStatusChange={handleStatusChange} isPast={true} />)}
+                {pastOrders.map(o => (
+                  <OrderCard key={o._id || o.id} order={o} onStatusChange={handleStatusChange} isPast={true} />
+                ))}
               </div>
             </div>
           )}
@@ -759,8 +849,9 @@ const Dashboard = ({ onLogout }) => {
         </div>
       </main>
 
+      {/* ── MODALS ── */}
       <AnimatePresence>
-        {showForm   && <MenuFormModal item={editItem}   onSave={handleSave}      onClose={closeForm}                />}
+        {showForm   && <MenuFormModal item={editItem}   onSave={handleSave}   onClose={closeForm}               />}
         {deleteItem && <DeleteConfirm item={deleteItem} onConfirm={handleDelete} onClose={() => setDeleteItem(null)} />}
       </AnimatePresence>
     </div>
@@ -769,12 +860,15 @@ const Dashboard = ({ onLogout }) => {
 
 /* ─── ROOT EXPORT ────────────────────────────────────────────────────── */
 const Admin = () => {
-  const [authed, setAuthed] = useState(
-    () => {
-      const token = localStorage.getItem('fg_admin_token');
-      return !!token && token !== 'owner-authenticated';
+  const [authed, setAuthed] = useState(() => {
+    const t = localStorage.getItem('fg_admin_token');
+    // Clear old non-JWT token format
+    if (t === 'owner-authenticated') {
+      localStorage.removeItem('fg_admin_token');
+      return false;
     }
-  );
+    return !!t;
+  });
 
   const handleLogout = () => {
     localStorage.removeItem('fg_admin_token');

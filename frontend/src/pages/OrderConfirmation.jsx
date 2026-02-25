@@ -25,17 +25,39 @@ const OrderConfirmation = () => {
     setPaymentId(paymentIntent);
 
     if (redirectStatus === 'succeeded') {
-      // Clear cart on successful payment
+      // Save order to MongoDB before clearing cart
+      const cart         = JSON.parse(localStorage.getItem('faith_grace_cart') || '[]');
+      const customerInfo = JSON.parse(localStorage.getItem('customerInfo') || '{}');
+      const subtotal     = cart.reduce((s, i) => s + i.price * i.quantity, 0);
+
+      fetch(`${API_BASE}/api/orders`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer_name:      customerInfo.name  || 'Guest',
+          customer_phone:     customerInfo.phone || '',
+          customer_email:     customerInfo.email || '',
+          items:              cart.map(i => ({ name: i.name, quantity: i.quantity, price: i.price })),
+          total:              subtotal * 1.08,
+          method:             customerInfo.method  || 'pickup',
+          address:            customerInfo.address || '',
+          payment_intent_id:  paymentIntent,
+        }),
+      }).catch(() => {});
+
+      // Save customer name+phone for next order (but not address/method)
+      if (customerInfo.name) {
+        localStorage.setItem('savedCustomer', JSON.stringify({
+          name:  customerInfo.name,
+          phone: customerInfo.phone || '',
+          email: customerInfo.email || '',
+        }));
+      }
+
+      // Clear cart and temp checkout info
       localStorage.removeItem('faith_grace_cart');
       localStorage.removeItem('customerInfo');
       setStatus('success');
-
-      // Notify backend (non-blocking)
-      fetch(`${API_BASE}/api/confirm-payment`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ payment_intent_id: paymentIntent }),
-      }).catch(() => {});
 
     } else if (redirectStatus === 'processing') {
       setStatus('processing');
