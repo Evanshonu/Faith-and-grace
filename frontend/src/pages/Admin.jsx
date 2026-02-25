@@ -71,7 +71,7 @@ const LoginPage = ({ onLogin }) => {
     setLoading(true);
     setError('');
     try {
-      const res  = await fetch('http://localhost:8000/api/auth/login', {
+      const res  = await fetch('https://faith-and-grace.onrender.com/api/auth/login', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ password: pw }),
@@ -466,7 +466,7 @@ const OrderCard = ({ order, onStatusChange, isPast }) => {
 };
 
 /* ─── MAIN DASHBOARD ─────────────────────────────────────────────────── */
-const API_ADMIN = 'http://localhost:8000';
+const API_ADMIN = 'https://faith-and-grace.onrender.com';
 
 const Dashboard = ({ onLogout }) => {
   const [tab,        setTab]        = useState('overview');

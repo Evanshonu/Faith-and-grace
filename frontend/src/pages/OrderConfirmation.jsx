@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CheckCircle, XCircle, Clock, ShoppingBag, Phone, Mail, ArrowRight } from 'lucide-react';
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = 'https://faith-and-grace.onrender.com';
 
 const OrderConfirmation = () => {
   const navigate = useNavigate();
