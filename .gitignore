@@ -1,0 +1,65 @@
+# Python
+*.pyc
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+backend/db.sqlite3
+backend/media/
+staticfiles/
+backend/staticfiles/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+frontend/dist/
+frontend/build/
+
+# Environment variables - CRITICAL!
+.env
+.env.local
+.env.production
+frontend/.env
+backend/.env
+**/.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+Backend/orders/migrations/__init__.py
+Backend/orders/migrations/0001_initial.py
+Backend/orders/migrations/0002_order_paid_at_order_payment_status_and_more.py
+Backend/orders/__init__.py
+Backend/orders/admin.py
+Backend/orders/apps.py
+Backend/orders/model_updates.py
+Backend/orders/models.py
+Backend/orders/notifications.py
+Backend/orders/payments.py
+Backend/orders/serializers.py
+Backend/orders/tests.py
+Backend/orders/urls.py
+Backend/orders/views.py
+Backend/orders/management/__init__.py
+Backend/orders/management/commands/add_menu_images.py
+Backend/orders/management/commands/__init__.py
+Backend/orders/management/commands/populate_menu.py
