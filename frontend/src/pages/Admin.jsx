@@ -404,15 +404,15 @@ const OrderCard = ({ order, onStatusChange, isPast }) => {
       <div className="flex items-center gap-4 p-5 cursor-pointer" onClick={() => setExpanded(e => !e)}>
         <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-black text-sm shrink-0"
           style={{ background: 'linear-gradient(135deg,#c0392b,#e67e22)' }}>
-          {(order.customer || '?')[0]}
+          {(order.customer || order.customer_name || '?')[0].toUpperCase()}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-black text-sm text-white">{order.customer}</span>
-            <span className="text-xs text-stone-600">{String(orderId).slice(-6).toUpperCase()}</span>
+            <span className="font-black text-sm text-white">{order.customer || order.customer_name || 'Guest'}</span>
+            <span className="text-xs text-stone-600">{order.orderId || String(orderId).slice(-6).toUpperCase()}</span>
           </div>
           <div className="text-xs text-stone-500 mt-0.5">
-            {order.phone} · {order.method === 'pickup' ? '🏃 Pickup' : '🚗 Delivery'}
+            {order.phone || order.customer_phone || 'No phone'} · {order.method === 'pickup' ? '🏃 Pickup' : '🚗 Delivery'}
             {order.address ? ` · ${order.address}` : ''}
           </div>
         </div>
@@ -441,8 +441,8 @@ const OrderCard = ({ order, onStatusChange, isPast }) => {
                 {(order.items || []).map((item, i) => (
                   <div key={i} className="flex justify-between text-sm py-1.5 border-b"
                     style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-                    <span className="text-stone-300">{item.name} × {item.quantity || item.qty || 1}</span>
-                    <span className="font-black text-white">${((item.price || 0) * (item.quantity || item.qty || 1)).toFixed(2)}</span>
+                    <span className="text-stone-300">{item.name} × {item.qty || item.quantity || 1}</span>
+                    <span className="font-black text-white">${((item.price || 0) * (item.qty || item.quantity || 1)).toFixed(2)}</span>
                   </div>
                 ))}
                 <div className="flex justify-between mt-3">
@@ -511,7 +511,7 @@ const Dashboard = ({ onLogout }) => {
   useEffect(() => {
     const loadMenu = async () => {
       try {
-        const res  = await fetch(`${API_ADMIN}/api/menu`);
+        const res  = await fetch(`${API_ADMIN}/api/menu?t=${Date.now()}`, { cache: 'no-store' });
         const data = await res.json();
         setMenu(Array.isArray(data) ? data : []);
       } catch (err) { console.error('Menu load failed:', err); }
@@ -529,13 +529,13 @@ const Dashboard = ({ onLogout }) => {
     loadOrders();
 
     // Poll orders every 30 seconds for real-time updates
-    const interval = setInterval(loadOrders, 30000);
+    const interval = setInterval(loadOrders, 15000);
     return () => clearInterval(interval);
   }, []);
 
   const activeOrders = orders.filter(o => o.status !== 'delivered');
   const pastOrders   = orders.filter(o => o.status === 'delivered');
-  const totalRevenue = pastOrders.reduce((s, o) => s + o.total, 0);
+  const totalRevenue = pastOrders.reduce((s, o) => s + (o.total || 0), 0);
 
   const filteredMenu = menu.filter(({ name, category }) =>
     (catFilter === 'All' || category === catFilter) &&
@@ -714,7 +714,7 @@ const Dashboard = ({ onLogout }) => {
                 </div>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                   {menu.map(item => (
-                    <div key={item.id} className="flex items-center gap-3 p-3 rounded-xl"
+                    <div key={item._id || item.id} className="flex items-center gap-3 p-3 rounded-xl"
                       style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
                       <img src={item.image} alt={item.name} className="w-10 h-10 rounded-lg object-cover shrink-0" />
                       <div className="flex-1 min-w-0">

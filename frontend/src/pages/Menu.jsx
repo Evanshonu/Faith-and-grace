@@ -46,10 +46,11 @@ const Menu = () => {
   const [cartOpen,       setCartOpen]       = useState(false);
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/menu`)
+    // cache-busting param forces fresh data past Cloudflare/browser cache
+    fetch(`${API_BASE}/api/menu?t=${Date.now()}`, { cache: 'no-store' })
       .then(r => r.json())
       .then(data => { if (Array.isArray(data) && data.length > 0) setMenuItems(data); })
-      .catch(() => {}); // silently keep fallback data
+      .catch(() => {}); // silently keep fallback data on network error
   }, []);
   const partyRef = useRef(null);
 
