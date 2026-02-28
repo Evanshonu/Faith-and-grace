@@ -19,40 +19,40 @@ const API_BASE = 'https://faith-and-grace.onrender.com';
 const stripeAppearance = {
   theme: 'night',
   variables: {
-    colorPrimary: '#e67e22',
-    colorBackground: '#1e120c',
-    colorText: '#f5ede3',
+    colorPrimary:     '#e67e22',
+    colorBackground:  '#1e120c',
+    colorText:        '#f5ede3',
     colorTextPlaceholder: '#7a5c48',
-    colorDanger: '#ef4444',
-    fontFamily: "'Lato', sans-serif",
-    borderRadius: '12px',
-    spacingUnit: '4px',
+    colorDanger:      '#ef4444',
+    fontFamily:       "'Lato', sans-serif",
+    borderRadius:     '12px',
+    spacingUnit:      '4px',
   },
   rules: {
     '.Input': {
-      border: '2px solid rgba(255,255,255,0.08)',
-      padding: '12px 16px',
-      boxShadow: 'none',
+      border:     '2px solid rgba(255,255,255,0.08)',
+      padding:    '12px 16px',
+      boxShadow:  'none',
     },
     '.Input:focus': {
-      border: '2px solid #e67e22',
-      boxShadow: '0 0 0 3px rgba(230,126,34,0.15)',
+      border:     '2px solid #e67e22',
+      boxShadow:  '0 0 0 3px rgba(230,126,34,0.15)',
     },
     '.Label': {
-      fontSize: '11px',
-      fontWeight: '700',
-      letterSpacing: '0.1em',
-      textTransform: 'uppercase',
-      color: '#7a5c48',
+      fontSize:     '11px',
+      fontWeight:   '700',
+      letterSpacing:'0.1em',
+      textTransform:'uppercase',
+      color:        '#7a5c48',
       marginBottom: '8px',
     },
     '.Tab': {
-      border: '2px solid rgba(255,255,255,0.08)',
-      boxShadow: 'none',
+      border:     '2px solid rgba(255,255,255,0.08)',
+      boxShadow:  'none',
     },
     '.Tab--selected': {
-      border: '2px solid #e67e22',
-      boxShadow: '0 0 0 3px rgba(230,126,34,0.15)',
+      border:     '2px solid #e67e22',
+      boxShadow:  '0 0 0 3px rgba(230,126,34,0.15)',
     },
     '.Error': {
       color: '#f87171',
@@ -150,9 +150,9 @@ const OrderSummary = ({ cartItems, customerInfo, total }) => (
 
 /* ─── PAYMENT FORM ───────────────────────────────────────────────────── */
 const PaymentForm = ({ amount, orderData, onSuccess }) => {
-  const stripe = useStripe();
-  const elements = useElements();
-  const [error, setError] = useState(null);
+  const stripe      = useStripe();
+  const elements    = useElements();
+  const [error, setError]         = useState(null);
   const [processing, setProcessing] = useState(false);
 
   const handleSubmit = async e => {
@@ -187,10 +187,9 @@ const PaymentForm = ({ amount, orderData, onSuccess }) => {
             payment_intent_id: paymentIntent.id,
             order_id: orderData.orderId,
           }),
-        }).catch(() => { }); // non-blocking
+        }).catch(() => {}); // non-blocking
 
-        localStorage.removeItem('faith_grace_cart');
-        localStorage.removeItem('customerInfo');
+        // Don't clear cart here — OrderConfirmation needs it to save the order
         onSuccess(paymentIntent.id);
       }
     } catch {
@@ -281,14 +280,14 @@ const SuccessState = ({ paymentId }) => (
 const CustomerForm = ({ onSubmit }) => {
   const saved = JSON.parse(localStorage.getItem('savedCustomer') || '{}');
   const [form, setForm] = useState({
-    name: saved.name || '',
-    phone: saved.phone || '',
-    email: saved.email || '',
-    method: 'pickup',
+    name:    saved.name    || '',
+    phone:   saved.phone   || '',
+    email:   saved.email   || '',
+    method:  'pickup',
     address: '',
   });
 
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const set   = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const valid = form.name.trim() && form.phone.trim() && (form.method === 'pickup' || form.address.trim());
 
   const inputCls = "w-full px-4 py-3 rounded-xl text-white text-sm outline-none transition-all";
@@ -327,7 +326,7 @@ const CustomerForm = ({ onSubmit }) => {
       <div>
         <label className="text-xs font-black tracking-widest uppercase text-stone-500 block mb-2">Order Method *</label>
         <div className="grid grid-cols-2 gap-3">
-          {['pickup', 'delivery'].map(m => (
+          {['pickup','delivery'].map(m => (
             <button key={m} type="button" onClick={() => set('method', m)}
               className="py-3 rounded-xl text-sm font-black uppercase tracking-wider transition-all"
               style={form.method === m
@@ -360,17 +359,17 @@ const CustomerForm = ({ onSubmit }) => {
 const Checkout = () => {
   const navigate = useNavigate();
 
-  const [step, setStep] = useState('info'); // 'info' | 'payment'
-  const [customerInfo, setCustomerInfo] = useState(null);
+  const [step,          setStep]         = useState('info'); // 'info' | 'payment'
+  const [customerInfo,  setCustomerInfo] = useState(null);
   const [stripePromise, setStripePromise] = useState(null);
-  const [clientSecret, setClientSecret] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [initError, setInitError] = useState(null);
-  const [success, setSuccess] = useState(false);
-  const [successId, setSuccessId] = useState(null);
+  const [clientSecret,  setClientSecret]  = useState(null);
+  const [loading,       setLoading]       = useState(false);
+  const [initError,     setInitError]     = useState(null);
+  const [success,       setSuccess]       = useState(false);
+  const [successId,     setSuccessId]     = useState(null);
 
-  const cartItems = JSON.parse(localStorage.getItem('faith_grace_cart') || '[]');
-  const subtotal = cartItems.reduce((s, i) => s + i.price * i.quantity, 0);
+  const cartItems    = JSON.parse(localStorage.getItem('faith_grace_cart') || '[]');
+  const subtotal     = cartItems.reduce((s, i) => s + i.price * i.quantity, 0);
   const totalWithTax = subtotal * 1.08;
 
   useEffect(() => {
@@ -382,11 +381,11 @@ const Checkout = () => {
     setStep('payment');
     setLoading(true);
     try {
-      const configRes = await fetch(`${API_BASE}/api/stripe-config`);
+      const configRes  = await fetch(`${API_BASE}/api/stripe-config`);
       const configData = await configRes.json();
       setStripePromise(loadStripe(configData.publishableKey));
 
-      const intentRes = await fetch(`${API_BASE}/api/create-payment-intent`, {
+      const intentRes  = await fetch(`${API_BASE}/api/create-payment-intent`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: totalWithTax, customer_name: info.name, customer_email: info.email }),
@@ -405,7 +404,7 @@ const Checkout = () => {
     setSuccess(true);
     setSuccessId(paymentIntentId);
     setTimeout(() => {
-      navigate(`/order-confirmation/${paymentIntentId}`);
+      navigate(`/order-confirmation?payment_intent=${paymentIntentId}&redirect_status=succeeded`);
     }, 2800);
   };
 
@@ -509,7 +508,7 @@ const Checkout = () => {
                 <Elements stripe={stripePromise} options={{ clientSecret, appearance: stripeAppearance }}>
                   <PaymentForm
                     amount={totalWithTax}
-                    orderData={{ orderId: null, customerName: customerInfo?.name || '', customerEmail: customerInfo?.email || '' }}
+                    orderData={orderData}
                     onSuccess={handleSuccess}
                   />
                 </Elements>

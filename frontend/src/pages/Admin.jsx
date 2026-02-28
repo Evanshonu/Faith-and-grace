@@ -389,6 +389,8 @@ const OrderCard = ({ order, onStatusChange, isPast }) => {
   const [expanded, setExpanded] = useState(false);
   const cfg        = STATUS_CONFIG[order.status];
   const nextStatus = NEXT_STATUS[order.status];
+  const orderId    = order._id || order.id;
+  const isReady    = order.status === 'ready';
 
   return (
     <motion.div
@@ -396,25 +398,26 @@ const OrderCard = ({ order, onStatusChange, isPast }) => {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       className="rounded-2xl overflow-hidden"
-      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+      style={{ background: 'rgba(255,255,255,0.04)', border: isReady ? '1px solid rgba(34,197,94,0.4)' : '1px solid rgba(255,255,255,0.08)' }}
     >
       {/* Summary row */}
       <div className="flex items-center gap-4 p-5 cursor-pointer" onClick={() => setExpanded(e => !e)}>
         <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-black text-sm shrink-0"
           style={{ background: 'linear-gradient(135deg,#c0392b,#e67e22)' }}>
-          {order.customer[0]}
+          {(order.customer || '?')[0]}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-black text-sm text-white">{order.customer}</span>
-            <span className="text-xs text-stone-500">{order._id || order.id}</span>
+            <span className="text-xs text-stone-600">{String(orderId).slice(-6).toUpperCase()}</span>
           </div>
           <div className="text-xs text-stone-500 mt-0.5">
-            {order.phone} · {order.method === 'pickup' ? '🏃 Pickup' : '🚗 Delivery'} · {order.time}
+            {order.phone} · {order.method === 'pickup' ? '🏃 Pickup' : '🚗 Delivery'}
+            {order.address ? ` · ${order.address}` : ''}
           </div>
         </div>
         <div className="flex items-center gap-3 shrink-0">
-          <span className="font-black text-white">${order.total.toFixed(2)}</span>
+          <span className="font-black text-white">${(order.total || 0).toFixed(2)}</span>
           <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-black ${cfg.color}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
             {cfg.label}
@@ -435,27 +438,51 @@ const OrderCard = ({ order, onStatusChange, isPast }) => {
             <div className="px-5 pb-5 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
               <div className="mt-4 mb-4">
                 <div className="text-xs font-black tracking-widest uppercase text-stone-500 mb-3">Items Ordered</div>
-                {order.items.map((item, i) => (
+                {(order.items || []).map((item, i) => (
                   <div key={i} className="flex justify-between text-sm py-1.5 border-b"
                     style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-                    <span className="text-stone-300">{item.name} × {item.qty}</span>
-                    <span className="font-black text-white">${(item.price * item.qty).toFixed(2)}</span>
+                    <span className="text-stone-300">{item.name} × {item.quantity || item.qty || 1}</span>
+                    <span className="font-black text-white">${((item.price || 0) * (item.quantity || item.qty || 1)).toFixed(2)}</span>
                   </div>
                 ))}
                 <div className="flex justify-between mt-3">
                   <span className="font-black text-sm text-stone-400">Total</span>
-                  <span className="font-black text-white">${order.total.toFixed(2)}</span>
+                  <span className="font-black text-white">${(order.total || 0).toFixed(2)}</span>
                 </div>
               </div>
 
-              {!isPast && nextStatus && (
-                <button
-                  onClick={() => onStatusChange(order._id || order.id, nextStatus)}
-                  className="w-full py-2.5 rounded-xl font-black text-xs tracking-widest uppercase text-white transition-all hover:-translate-y-0.5"
-                  style={{ background: 'linear-gradient(135deg,#c0392b,#e67e22)', boxShadow: '0 3px 14px rgba(192,57,43,0.35)' }}
-                >
-                  Mark as {STATUS_CONFIG[nextStatus].label} →
-                </button>
+              {!isPast && (
+                <div className="flex flex-col gap-2">
+                  {/* When order is READY — show Call Customer + Mark Delivered */}
+                  {isReady ? (
+                    <>
+                      {order.phone && (
+                        <a
+                          href={`tel:${order.phone}`}
+                          className="w-full py-2.5 rounded-xl font-black text-xs tracking-widest uppercase text-white transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                          style={{ background: 'linear-gradient(135deg,#16a34a,#22c55e)', boxShadow: '0 3px 14px rgba(34,197,94,0.35)' }}
+                        >
+                          📞 Call {order.customer} to Notify
+                        </a>
+                      )}
+                      <button
+                        onClick={() => onStatusChange(orderId, 'delivered')}
+                        className="w-full py-2.5 rounded-xl font-black text-xs tracking-widest uppercase transition-all hover:-translate-y-0.5"
+                        style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: '#aaa' }}
+                      >
+                        ✓ Mark as Delivered
+                      </button>
+                    </>
+                  ) : nextStatus ? (
+                    <button
+                      onClick={() => onStatusChange(orderId, nextStatus)}
+                      className="w-full py-2.5 rounded-xl font-black text-xs tracking-widest uppercase text-white transition-all hover:-translate-y-0.5"
+                      style={{ background: 'linear-gradient(135deg,#c0392b,#e67e22)', boxShadow: '0 3px 14px rgba(192,57,43,0.35)' }}
+                    >
+                      Mark as {STATUS_CONFIG[nextStatus].label} →
+                    </button>
+                  ) : null}
+                </div>
               )}
             </div>
           </motion.div>
@@ -482,19 +509,28 @@ const Dashboard = ({ onLogout }) => {
   const authH = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
 
   useEffect(() => {
-    const load = async () => {
+    const loadMenu = async () => {
       try {
-        const [mRes, oRes] = await Promise.all([
-          fetch(`${API_ADMIN}/api/menu`),
-          fetch(`${API_ADMIN}/api/orders`, { headers: authH }),
-        ]);
-        const mData = await mRes.json();
-        const oData = await oRes.json();
-        setMenu(Array.isArray(mData) ? mData : []);
-        setOrders(Array.isArray(oData) ? oData : []);
-      } catch (err) { console.error('Load failed:', err); }
+        const res  = await fetch(`${API_ADMIN}/api/menu`);
+        const data = await res.json();
+        setMenu(Array.isArray(data) ? data : []);
+      } catch (err) { console.error('Menu load failed:', err); }
     };
-    load();
+
+    const loadOrders = async () => {
+      try {
+        const res  = await fetch(`${API_ADMIN}/api/orders`, { headers: authH });
+        const data = await res.json();
+        setOrders(Array.isArray(data) ? data : []);
+      } catch (err) { console.error('Orders load failed:', err); }
+    };
+
+    loadMenu();
+    loadOrders();
+
+    // Poll orders every 30 seconds for real-time updates
+    const interval = setInterval(loadOrders, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const activeOrders = orders.filter(o => o.status !== 'delivered');
@@ -761,7 +797,11 @@ const Dashboard = ({ onLogout }) => {
                         <div className="flex gap-2">
                           {/* Toggle availability */}
                           <button
-                            onClick={() => setMenu(m => m.map(i => i.id === item.id ? { ...i, available: !i.available } : i))}
+                            onClick={async () => {
+                            const updated = { ...item, available: !item.available };
+                            try { await fetch(`${API_ADMIN}/api/menu/${item._id}`, { method: 'PUT', headers: authH, body: JSON.stringify(updated) }); } catch {}
+                            setMenu(m => m.map(i => (i._id || i.id) === (item._id || item.id) ? updated : i));
+                          }}
                             className={`flex items-center gap-1.5 flex-1 py-2 rounded-xl text-xs font-black uppercase transition-all justify-center ${item.available ? 'text-green-400 hover:bg-green-500/10' : 'text-red-400 hover:bg-red-500/10'}`}
                             style={{ border: item.available ? '1px solid rgba(34,197,94,0.25)' : '1px solid rgba(239,68,68,0.25)' }}
                           >

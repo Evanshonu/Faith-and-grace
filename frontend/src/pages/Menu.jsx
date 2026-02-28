@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -7,7 +7,9 @@ import {
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 
-const MENU_ITEMS = [
+const API_BASE = 'https://faith-and-grace.onrender.com';
+
+const FALLBACK_MENU = [
   { id: 1, name: 'Jollof Rice',     price: 12.99, desc: 'Smoky tomato-based rice slow-cooked with spices — the crown jewel of West African cuisine.',      image: '/images/jollof.jpg',           category: 'Rice Dishes', popular: true  },
   { id: 2, name: 'Waakye',          price: 11.99, desc: 'Hearty Ghanaian rice & beans cooked together, served with rich stew and garnishes.',                image: '/images/waakye.jpg',           category: 'Rice Dishes', popular: true  },
   { id: 3, name: 'Fried Rice',      price: 12.99, desc: 'Golden stir-fried rice tossed with vegetables, eggs, and aromatic seasoning.',                      image: '/images/friedrice.webp',       category: 'Rice Dishes', popular: false },
@@ -39,13 +41,21 @@ const Menu = () => {
   // Pull everything from CartContext — single source of truth
   const { cart, addToCart, removeFromCart, updateCartItem, total, itemCount } = useCart();
 
+  const [menuItems,      setMenuItems]      = useState(FALLBACK_MENU);
   const [activeCategory, setActiveCategory] = useState('All');
   const [cartOpen,       setCartOpen]       = useState(false);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/menu`)
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data) && data.length > 0) setMenuItems(data); })
+      .catch(() => {}); // silently keep fallback data
+  }, []);
   const partyRef = useRef(null);
 
   const filtered = activeCategory === 'All'
-    ? MENU_ITEMS
-    : MENU_ITEMS.filter(i => i.category === activeCategory);
+    ? menuItems
+    : menuItems.filter(i => i.category === activeCategory);
 
   // Calculates new quantity and removes item if it hits zero
   const updateQty = (id, delta) => {

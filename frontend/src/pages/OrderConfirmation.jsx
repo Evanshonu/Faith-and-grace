@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useCart } from '../context/CartContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CheckCircle, XCircle, Clock, ShoppingBag, Phone, Mail, ArrowRight } from 'lucide-react';
@@ -8,69 +9,77 @@ const API_BASE = 'https://faith-and-grace.onrender.com';
 const OrderConfirmation = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [status, setStatus]   = useState('loading'); // loading | success | failed | processing
+  const { clearCart } = useCart();
+  const [status,    setStatus]    = useState('loading');
   const [paymentId, setPaymentId] = useState(null);
 
   useEffect(() => {
-    // Stripe appends these params to the return_url after redirect
-    const paymentIntent       = searchParams.get('payment_intent');
-    const redirectStatus      = searchParams.get('redirect_status');
+    const paymentIntent  = searchParams.get('payment_intent');
+    const redirectStatus = searchParams.get('redirect_status');
 
-    if (!paymentIntent && !redirectStatus) {
-      // Came here without Stripe params — redirect to home
-      navigate('/');
-      return;
-    }
+    if (!paymentIntent || !redirectStatus) { navigate('/'); return; }
 
     setPaymentId(paymentIntent);
 
     if (redirectStatus === 'succeeded') {
-      // Save order to MongoDB before clearing cart
-      const cart         = JSON.parse(localStorage.getItem('faith_grace_cart') || '[]');
-      const customerInfo = JSON.parse(localStorage.getItem('customerInfo') || '{}');
-      const subtotal     = cart.reduce((s, i) => s + i.price * i.quantity, 0);
+      const saveAndClear = async () => {
+        // Read cart and customerInfo BEFORE clearing anything
+        const cart         = JSON.parse(localStorage.getItem('faith_grace_cart') || '[]');
+        const customerInfo = JSON.parse(localStorage.getItem('customerInfo') || '{}');
+        const subtotal     = cart.reduce((s, i) => s + i.price * (i.quantity || 1), 0);
 
-      fetch(`${API_BASE}/api/orders`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customer_name:      customerInfo.name  || 'Guest',
-          customer_phone:     customerInfo.phone || '',
-          customer_email:     customerInfo.email || '',
-          items:              cart.map(i => ({ name: i.name, quantity: i.quantity, price: i.price })),
-          total:              subtotal * 1.08,
-          method:             customerInfo.method  || 'pickup',
-          address:            customerInfo.address || '',
-          payment_intent_id:  paymentIntent,
-        }),
-      }).catch(() => {});
+        // Save order to MongoDB — await so we know it completed
+        try {
+          const res  = await fetch(`${API_BASE}/api/orders`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              customer_name:     customerInfo.name    || 'Guest',
+              customer_phone:    customerInfo.phone   || 'N/A',
+              customer_email:    customerInfo.email   || '',
+              items:             cart.map(i => ({ name: i.name, qty: i.quantity || 1, price: i.price })),
+              total:             parseFloat((subtotal * 1.08).toFixed(2)),
+              method:            customerInfo.method  || 'pickup',
+              address:           customerInfo.address || '',
+              payment_intent_id: paymentIntent,
+            }),
+          });
+          const data = await res.json();
+          console.log('Order saved:', data._id);
+        } catch (err) {
+          console.error('Order save failed:', err);
+        }
 
-      // Save customer name+phone for next order (but not address/method)
-      if (customerInfo.name) {
-        localStorage.setItem('savedCustomer', JSON.stringify({
-          name:  customerInfo.name,
-          phone: customerInfo.phone || '',
-          email: customerInfo.email || '',
-        }));
-      }
+        // Save customer info for next time
+        if (customerInfo.name) {
+          localStorage.setItem('savedCustomer', JSON.stringify({
+            name:  customerInfo.name,
+            phone: customerInfo.phone || '',
+            email: customerInfo.email || '',
+          }));
+        }
 
-      // Clear cart and temp checkout info
-      localStorage.removeItem('faith_grace_cart');
-      localStorage.removeItem('customerInfo');
-      setStatus('success');
+        // Clear cart + customerInfo AFTER order is saved
+        clearCart();
+        localStorage.removeItem('customerInfo');
+        setStatus('success');
+      };
+
+      saveAndClear();
 
     } else if (redirectStatus === 'processing') {
       setStatus('processing');
     } else {
       setStatus('failed');
     }
-  }, [searchParams, navigate]);
+  }, []); // eslint-disable-line
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center"
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4"
         style={{ background: 'linear-gradient(160deg,#0d0805,#1a0f0a)', fontFamily: "'Lato',sans-serif" }}>
         <div className="w-10 h-10 border-2 border-stone-700 border-t-orange-500 rounded-full animate-spin" />
+        <p className="text-stone-500 text-sm">Saving your order...</p>
       </div>
     );
   }
