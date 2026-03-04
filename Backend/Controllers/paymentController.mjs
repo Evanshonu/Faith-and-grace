@@ -1,7 +1,6 @@
 import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-console.log('KEY STARTS WITH:', process.env.STRIPE_SECRET_KEY?.substring(0, 7));
 
 // Returns the publishable key to the frontend so it can initialize Stripe.js
 const getStripeConfig = (req, res) => {

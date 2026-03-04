@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, UtensilsCrossed, ShoppingBag, History,
@@ -189,23 +189,76 @@ const StatCard = ({ icon: Icon, label, value, sub, color }) => (
 );
 
 /* ─── MENU FORM MODAL ────────────────────────────────────────────────── */
-const MenuFormModal = ({ item, onSave, onClose }) => {
-  const [form, setForm]       = useState(item ?? EMPTY_FORM);
-  const [preview, setPreview] = useState(item?.image ?? '');
+const MenuFormModal = ({ item, categories: initCategories, onSave, onClose }) => {
+  const [form,        setForm]        = useState(item ?? EMPTY_FORM);
+  const [imgSource,   setImgSource]   = useState('url');   // 'url' | 'file' | 'drive'
+  const [preview,     setPreview]     = useState(item?.image ?? '');
+  const [categories,  setCategories]  = useState(initCategories);
+  const [newCat,      setNewCat]      = useState('');
+  const [showNewCat,  setShowNewCat]  = useState(false);
+  const fileRef = useRef(null);
 
   const set   = (k, v) => setForm(f => ({ ...f, [k]: v }));
-  const valid = form.name && form.price && form.desc;
+  const valid = form.name.trim() && form.price && form.desc.trim();
+
+  // Convert Google Drive share link → direct image URL
+  const driveToImg = url => {
+    const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    return match ? `https://drive.google.com/uc?export=view&id=${match[1]}` : url;
+  };
+
+  const handleFileChange = e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const dataUrl = ev.target.result;
+      setPreview(dataUrl);
+      set('image', dataUrl);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDriveUrl = url => {
+    const direct = driveToImg(url);
+    setPreview(direct);
+    set('image', direct);
+  };
+
+  const handleUrlChange = url => {
+    set('image', url);
+    setPreview(url);
+  };
+
+  const addCategory = () => {
+    const trimmed = newCat.trim();
+    if (!trimmed || categories.includes(trimmed)) return;
+    const updated = [...categories, trimmed];
+    setCategories(updated);
+    set('category', trimmed);
+    setNewCat('');
+    setShowNewCat(false);
+  };
+
+  const deleteCategory = cat => {
+    if (categories.length <= 1) return;
+    const updated = categories.filter(c => c !== cat);
+    setCategories(updated);
+    if (form.category === cat) set('category', updated[0]);
+  };
 
   const handleSave = () => {
     if (!valid) return;
-    onSave({ ...form, price: parseFloat(form.price), id: item?.id ?? Date.now() });
+    onSave({ ...form, price: parseFloat(form.price), id: item?.id ?? Date.now() }, categories);
   };
+
+  const iCls = "w-full px-4 py-3 rounded-xl text-white text-sm outline-none transition-all";
 
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}
+      style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }}
     >
       <motion.div
         initial={{ scale: 0.93, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95 }}
@@ -213,131 +266,197 @@ const MenuFormModal = ({ item, onSave, onClose }) => {
         style={{ background: '#1a1210', border: '1px solid rgba(255,255,255,0.1)' }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-7 py-5 border-b"
-          style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+        <div className="flex items-center justify-between px-7 py-5 border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
           <div>
             <div className="font-corm text-2xl font-bold text-white">{item ? 'Edit Dish' : 'Add New Dish'}</div>
             <div className="text-xs text-stone-500 mt-0.5">{item ? `Editing — ${item.name}` : 'Fill in the details below'}</div>
           </div>
-          <button onClick={onClose}
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-stone-500 hover:text-white transition-colors"
-            style={{ background: 'rgba(255,255,255,0.06)' }}>
+          <button onClick={onClose} className="w-9 h-9 rounded-xl flex items-center justify-center text-stone-500 hover:text-white transition-colors" style={{ background: 'rgba(255,255,255,0.06)' }}>
             <X size={18} />
           </button>
         </div>
 
         {/* Body */}
-        <div className="p-7 flex flex-col gap-5 max-h-[70vh] overflow-y-auto hide-scroll">
+        <div className="p-7 flex flex-col gap-5 max-h-[72vh] overflow-y-auto hide-scroll">
 
-          {/* Image URL */}
+          {/* ── IMAGE SECTION ── */}
           <div>
-            <label className="text-xs font-black tracking-widest uppercase text-stone-500 block mb-2">Image URL</label>
-            <div className="flex gap-3">
-              <input
-                value={form.image}
-                onChange={e => { set('image', e.target.value); setPreview(e.target.value); }}
-                onFocus={focusRed} onBlur={blurReset}
-                placeholder="/images/dish.jpg or https://..."
-                className="flex-1 px-4 py-3 rounded-xl text-white text-sm outline-none transition-all"
-                style={inputStyle}
-              />
-              {preview
-                ? <img src={preview} alt="" className="w-14 h-14 rounded-xl object-cover shrink-0" onError={() => setPreview('')} />
-                : <div className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ background: 'rgba(255,255,255,0.06)', border: '2px dashed rgba(255,255,255,0.15)' }}>
-                    <ImagePlus size={20} className="text-stone-600" />
-                  </div>
-              }
+            <label className="text-xs font-black tracking-widest uppercase text-stone-500 block mb-3">Dish Image</label>
+
+            {/* Source tabs */}
+            <div className="flex gap-2 mb-3">
+              {[['url','🔗 URL'],['file','📁 Local File'],['drive','☁️ Drive']].map(([key, label]) => (
+                <button key={key} type="button" onClick={() => setImgSource(key)}
+                  className="flex-1 py-2 rounded-lg text-xs font-black uppercase tracking-wide transition-all"
+                  style={imgSource === key
+                    ? { background: 'linear-gradient(135deg,#c0392b,#e67e22)', color: '#fff' }
+                    : { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#777' }}>
+                  {label}
+                </button>
+              ))}
             </div>
+
+            {/* URL input */}
+            {imgSource === 'url' && (
+              <div className="flex gap-3">
+                <input value={form.image} onChange={e => handleUrlChange(e.target.value)}
+                  onFocus={focusRed} onBlur={blurReset}
+                  placeholder="https://example.com/image.jpg"
+                  className={iCls} style={inputStyle} />
+              </div>
+            )}
+
+            {/* Local file */}
+            {imgSource === 'file' && (
+              <div>
+                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                <button type="button" onClick={() => fileRef.current?.click()}
+                  className="w-full py-3 rounded-xl text-sm font-black text-stone-300 transition-all hover:text-white flex items-center justify-center gap-2"
+                  style={{ border: '2px dashed rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.03)' }}>
+                  <ImagePlus size={18} /> Click to select from device
+                </button>
+                {preview && imgSource === 'file' && (
+                  <p className="text-xs text-stone-500 mt-2 text-center">File loaded ✓</p>
+                )}
+              </div>
+            )}
+
+            {/* Google Drive */}
+            {imgSource === 'drive' && (
+              <div className="flex flex-col gap-2">
+                <input
+                  placeholder="Paste Google Drive share link"
+                  onBlur={e => handleDriveUrl(e.target.value)}
+                  onChange={e => { if (e.target.value === '') { setPreview(''); set('image', ''); }}}
+                  onFocus={focusRed}
+                  className={iCls} style={inputStyle} />
+                <p className="text-xs text-stone-600">Paste the share link — it will be auto-converted to a direct image URL</p>
+              </div>
+            )}
+
+            {/* Preview */}
+            {preview ? (
+              <div className="mt-3 relative w-full h-36 rounded-xl overflow-hidden">
+                <img src={preview} alt="preview" className="w-full h-full object-cover" onError={() => setPreview('')} />
+                <button type="button" onClick={() => { setPreview(''); set('image', ''); }}
+                  className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center"
+                  style={{ background: 'rgba(0,0,0,0.7)' }}>
+                  <X size={14} className="text-white" />
+                </button>
+              </div>
+            ) : (
+              <div className="mt-3 w-full h-20 rounded-xl flex items-center justify-center"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '2px dashed rgba(255,255,255,0.08)' }}>
+                <span className="text-xs text-stone-600">No image selected</span>
+              </div>
+            )}
           </div>
 
           {/* Name */}
           <div>
             <label className="text-xs font-black tracking-widest uppercase text-stone-500 block mb-2">Dish Name *</label>
-            <input
-              value={form.name}
-              onChange={e => set('name', e.target.value)}
+            <input value={form.name} onChange={e => set('name', e.target.value)}
               onFocus={focusRed} onBlur={blurReset}
               placeholder="e.g. Jollof Rice"
-              className="w-full px-4 py-3 rounded-xl text-white text-sm outline-none transition-all"
-              style={inputStyle}
-            />
+              className={iCls} style={inputStyle} />
           </div>
 
           {/* Price + Category */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-black tracking-widest uppercase text-stone-500 block mb-2">Price ($) *</label>
-              <input
-                type="number" step="0.01"
-                value={form.price}
-                onChange={e => set('price', e.target.value)}
+              <input type="number" step="0.01" value={form.price} onChange={e => set('price', e.target.value)}
                 onFocus={focusRed} onBlur={blurReset}
-                placeholder="0.00"
-                className="w-full px-4 py-3 rounded-xl text-white text-sm outline-none transition-all"
-                style={inputStyle}
-              />
+                placeholder="0.00" className={iCls} style={inputStyle} />
             </div>
             <div>
               <label className="text-xs font-black tracking-widest uppercase text-stone-500 block mb-2">Category</label>
-              <select
-                value={form.category}
-                onChange={e => set('category', e.target.value)}
-                className="w-full px-4 py-3 rounded-xl text-white text-sm outline-none transition-all"
-                style={{ background: '#2a1a14', border: '2px solid rgba(255,255,255,0.1)', fontFamily: 'inherit' }}
-              >
-                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              <select value={form.category} onChange={e => set('category', e.target.value)}
+                className={iCls} style={{ background: '#2a1a14', border: '2px solid rgba(255,255,255,0.1)', fontFamily: 'inherit' }}>
+                {categories.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
+            </div>
+          </div>
+
+          {/* Category manager */}
+          <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-black tracking-widest uppercase text-stone-500">Manage Categories</span>
+              <button type="button" onClick={() => setShowNewCat(v => !v)}
+                className="flex items-center gap-1 text-xs font-black px-2 py-1 rounded-lg transition-all"
+                style={{ background: 'rgba(230,126,34,0.15)', color: '#ff9a3c', border: '1px solid rgba(230,126,34,0.3)' }}>
+                <Plus size={12} /> Add New
+              </button>
+            </div>
+
+            {/* Add new category input */}
+            {showNewCat && (
+              <div className="flex gap-2 mb-3">
+                <input value={newCat} onChange={e => setNewCat(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && addCategory()}
+                  placeholder="New category name..."
+                  className="flex-1 px-3 py-2 rounded-lg text-white text-sm outline-none"
+                  style={{ background: 'rgba(255,255,255,0.07)', border: '2px solid rgba(230,126,34,0.4)', fontFamily: 'inherit' }} />
+                <button type="button" onClick={addCategory}
+                  className="px-3 py-2 rounded-lg text-white text-xs font-black"
+                  style={{ background: 'linear-gradient(135deg,#c0392b,#e67e22)' }}>
+                  Add
+                </button>
+              </div>
+            )}
+
+            {/* Category chips */}
+            <div className="flex flex-wrap gap-2">
+              {categories.map(cat => (
+                <div key={cat} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black transition-all"
+                  style={form.category === cat
+                    ? { background: 'linear-gradient(135deg,#c0392b,#e67e22)', color: '#fff' }
+                    : { background: 'rgba(255,255,255,0.07)', color: '#888', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <button type="button" onClick={() => set('category', cat)} className="outline-none">{cat}</button>
+                  {categories.length > 1 && (
+                    <button type="button" onClick={() => deleteCategory(cat)}
+                      className="ml-0.5 hover:text-red-400 transition-colors">
+                      <X size={11} />
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
 
           {/* Description */}
           <div>
             <label className="text-xs font-black tracking-widest uppercase text-stone-500 block mb-2">Description *</label>
-            <textarea
-              value={form.desc}
-              onChange={e => set('desc', e.target.value)}
+            <textarea value={form.desc} onChange={e => set('desc', e.target.value)}
               onFocus={focusRed} onBlur={blurReset}
-              rows={3}
-              placeholder="Describe the dish..."
+              rows={3} placeholder="Describe the dish..."
               className="w-full px-4 py-3 rounded-xl text-white text-sm outline-none transition-all resize-none"
-              style={inputStyle}
-            />
+              style={inputStyle} />
           </div>
 
-          {/* Availability toggle */}
+          {/* Availability */}
           <div className="flex items-center justify-between p-4 rounded-xl"
             style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
             <div>
               <div className="text-sm font-black text-white">Available on Menu</div>
               <div className="text-xs text-stone-500 mt-0.5">Customers can see and order this dish</div>
             </div>
-            <button onClick={() => set('available', !form.available)}>
-              {form.available
-                ? <ToggleRight size={36} style={{ color: '#22c55e' }} />
-                : <ToggleLeft  size={36} className="text-stone-600" />}
+            <button type="button" onClick={() => set('available', !form.available)}>
+              {form.available ? <ToggleRight size={36} style={{ color: '#22c55e' }} /> : <ToggleLeft size={36} className="text-stone-600" />}
             </button>
           </div>
         </div>
 
         {/* Footer */}
         <div className="flex gap-3 px-7 py-5 border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-          <button
-            onClick={onClose}
+          <button onClick={onClose}
             className="flex-1 py-3 rounded-xl text-stone-400 font-black text-sm tracking-wider uppercase transition-all hover:bg-white/5"
-            style={{ border: '1px solid rgba(255,255,255,0.1)' }}
-          >
+            style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
             Cancel
           </button>
-          <button
-            onClick={handleSave}
-            disabled={!valid}
+          <button onClick={handleSave} disabled={!valid}
             className="flex-1 py-3 rounded-xl text-white font-black text-sm tracking-wider uppercase transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{
-              background: valid ? 'linear-gradient(135deg,#c0392b,#e67e22)' : '#444',
-              boxShadow: valid ? '0 4px 16px rgba(192,57,43,0.4)' : 'none',
-            }}
-          >
+            style={{ background: valid ? 'linear-gradient(135deg,#c0392b,#e67e22)' : '#444', boxShadow: valid ? '0 4px 16px rgba(192,57,43,0.4)' : 'none' }}>
             <Save size={16} /> {item ? 'Save Changes' : 'Add Dish'}
           </button>
         </div>
@@ -501,6 +620,7 @@ const Dashboard = ({ onLogout }) => {
   const [orders,     setOrders]     = useState([]);
   const [editItem,   setEditItem]   = useState(null);
   const [showForm,   setShowForm]   = useState(false);
+  const [categories, setCategories] = useState(CATEGORIES);
   const [deleteItem, setDeleteItem] = useState(null);
   const [search,     setSearch]     = useState('');
   const [catFilter,  setCatFilter]  = useState('All');
@@ -542,33 +662,59 @@ const Dashboard = ({ onLogout }) => {
     name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleSave = async data => {
+  const reloadMenu = async () => {
+    try {
+      const res  = await fetch(`${API_ADMIN}/api/menu?t=${Date.now()}`, { cache: 'no-store' });
+      const data = await res.json();
+      if (Array.isArray(data)) setMenu(data);
+    } catch (err) { console.error('Menu reload failed:', err); }
+  };
+
+  const handleSave = async (data, updatedCategories) => {
     try {
       const isEdit = !!editItem;
       const url    = isEdit ? `${API_ADMIN}/api/menu/${editItem._id}` : `${API_ADMIN}/api/menu`;
       const res    = await fetch(url, { method: isEdit ? 'PUT' : 'POST', headers: authH, body: JSON.stringify(data) });
-      const saved  = await res.json();
-      setMenu(m => isEdit ? m.map(i => i._id === saved._id ? saved : i) : [...m, saved]);
-    } catch (err) { console.error('Save failed:', err); }
+      if (!res.ok) {
+        const err = await res.json();
+        alert(`Save failed: ${err.error || 'Unknown error'}`);
+        return;
+      }
+      if (updatedCategories) setCategories(updatedCategories);
+      await reloadMenu(); // Always reload from server so UI matches MongoDB exactly
+    } catch (err) {
+      console.error('Save failed:', err);
+      alert('Save failed — check your connection and try again.');
+    }
     setShowForm(false);
     setEditItem(null);
   };
 
   const handleDelete = async () => {
     try {
-      await fetch(`${API_ADMIN}/api/menu/${deleteItem._id}`, { method: 'DELETE', headers: authH });
-      setMenu(m => m.filter(i => i._id !== deleteItem._id));
+      const res = await fetch(`${API_ADMIN}/api/menu/${deleteItem._id}`, { method: 'DELETE', headers: authH });
+      if (!res.ok) { const e = await res.json(); alert(`Delete failed: ${e.error}`); return; }
+      await reloadMenu(); // Reload so user-side menu is in sync
     } catch (err) { console.error('Delete failed:', err); }
     setDeleteItem(null);
   };
 
+  const reloadOrders = async () => {
+    try {
+      const res  = await fetch(`${API_ADMIN}/api/orders`, { headers: authH });
+      const data = await res.json();
+      if (Array.isArray(data)) setOrders(data);
+    } catch (err) { console.error('Orders reload failed:', err); }
+  };
+
   const handleStatusChange = async (id, newStatus) => {
     try {
-      await fetch(`${API_ADMIN}/api/orders/${id}`, {
+      const res = await fetch(`${API_ADMIN}/api/orders/${id}`, {
         method: 'PATCH', headers: authH,
         body: JSON.stringify({ status: newStatus }),
       });
-      setOrders(o => o.map(ord => (ord._id === id ? { ...ord, status: newStatus } : ord)));
+      if (!res.ok) { const e = await res.json(); alert(`Status update failed: ${e.error}`); return; }
+      await reloadOrders(); // Reload so active/past split is accurate
     } catch (err) { console.error('Status update failed:', err); }
   };
 
@@ -746,7 +892,7 @@ const Dashboard = ({ onLogout }) => {
                   />
                 </div>
                 <div className="flex gap-2 flex-wrap">
-                  {['All', ...CATEGORIES].map(c => (
+                  {['All', ...categories].map(c => (
                     <button
                       key={c}
                       onClick={() => setCatFilter(c)}
@@ -799,7 +945,10 @@ const Dashboard = ({ onLogout }) => {
                           <button
                             onClick={async () => {
                             const updated = { ...item, available: !item.available };
-                            try { await fetch(`${API_ADMIN}/api/menu/${item._id}`, { method: 'PUT', headers: authH, body: JSON.stringify(updated) }); } catch {}
+                            try {
+                              const r = await fetch(`${API_ADMIN}/api/menu/${item._id}`, { method: 'PUT', headers: authH, body: JSON.stringify(updated) });
+                              if (r.ok) await reloadMenu();
+                            } catch {}
                             setMenu(m => m.map(i => (i._id || i.id) === (item._id || item.id) ? updated : i));
                           }}
                             className={`flex items-center gap-1.5 flex-1 py-2 rounded-xl text-xs font-black uppercase transition-all justify-center ${item.available ? 'text-green-400 hover:bg-green-500/10' : 'text-red-400 hover:bg-red-500/10'}`}
@@ -891,7 +1040,7 @@ const Dashboard = ({ onLogout }) => {
 
       {/* ── MODALS ── */}
       <AnimatePresence>
-        {showForm   && <MenuFormModal item={editItem}   onSave={handleSave}   onClose={closeForm}               />}
+        {showForm   && <MenuFormModal item={editItem}   categories={categories} onSave={handleSave}   onClose={closeForm}               />}
         {deleteItem && <DeleteConfirm item={deleteItem} onConfirm={handleDelete} onClose={() => setDeleteItem(null)} />}
       </AnimatePresence>
     </div>
