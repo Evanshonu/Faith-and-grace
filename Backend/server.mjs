@@ -1,74 +1,49 @@
-import express from "express";
-import mongoose from "mongoose";
-import cors from "cors";
-import dotenv from "dotenv";
-
-import authRoutes from "./Routes/auth.mjs";
-import menuRoutes from "./Routes/menu.mjs";
-import orderRoutes from "./Routes/orders.mjs";
-import paymentRoutes from "./Routes/payments.mjs";
-import webhookRoutes from "./Routes/webhook.mjs";
-import errorHandler from "./Middlewares/errorHandler.mjs";
+import express      from 'express';
+import cors         from 'cors';
+import dotenv       from 'dotenv';
+import connectDB    from './config/db.mjs';
+import errorHandler from './Middlewares/errorHandler.mjs';
+import authRoutes    from './Routes/auth.mjs';
+import menuRoutes    from './Routes/menu.mjs';
+import orderRoutes   from './Routes/orders.mjs';
+import paymentRoutes from './Routes/payments.mjs';
 
 dotenv.config();
 
-const app = express();
+const app  = express();
 const PORT = process.env.PORT || 8000;
 
-/* ======================
-   MIDDLEWARES
-====================== */
+const ALLOWED_ORIGINS = [
+  'http://localhost:5173',
+  'https://faith-and-grace-site.pages.dev',
+  'https://www.graceefaith.com',
+  'https://graceefaith.com',
+];
 
 app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "https://faith-grace-catering.vercel.app",
-    "https://faith-and-grace-site.pages.dev",
-    "https://www.graceefaith.com",
-    "https://graceefaith.com",
-  ],
-  credentials: true,
+  origin:       ALLOWED_ORIGINS,
+  methods:      ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials:  true,
 }));
 
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // 10mb limit for base64 image uploads
 
-/* ======================
-   ROUTES
-====================== */
+app.use('/api/auth',   authRoutes);
+app.use('/api/menu',   menuRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api',        paymentRoutes);
 
-app.use("/api/auth", authRoutes);
-app.use("/api/menu", menuRoutes);
-app.use("/api/orders", orderRoutes);
-app.use("/api", paymentRoutes);
-app.use("/api/webhook", webhookRoutes);
+app.get('/', (req, res) => res.send(`${process.env.RESTAURANT_NAME || 'Faith & Grace'} API running`));
 
 app.use(errorHandler);
 
-/* ======================
-   DATABASE + SERVER START
-====================== */
-
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log("✅ MongoDB Connected");
-
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on http://localhost:${PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.error("❌ MongoDB connection failed:", err.message);
+const startServer = async () => {
+  await connectDB();
+  app.listen(PORT, () => {
+    console.log(`KEY STARTS WITH: ${process.env.STRIPE_SECRET_KEY?.slice(0, 7)}`);
+    console.log(`✅ Server running on http://localhost:${PORT}`);
   });
+};
 
-/* ======================
-   SAFETY HANDLERS
-====================== */
-
-process.on("unhandledRejection", (err) => {
-  console.error("Unhandled Rejection:", err.message);
-});
-
-process.on("uncaughtException", (err) => {
-  console.error("Uncaught Exception:", err.message);
-});
+startServer();

@@ -15,6 +15,7 @@
     "mongoose": "^9.2.4",
     "nodemailer": "^8.0.1",
     "nodemon": "^3.1.14",
-    "stripe": "^14.0.0"
+    "stripe": "^14.0.0",
+    "twilio": "^5.12.2"
   }
 }

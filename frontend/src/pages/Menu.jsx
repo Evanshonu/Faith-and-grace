@@ -20,8 +20,6 @@ const FALLBACK_MENU = [
   { id: 8, name: 'Bofrot',          price: 6.99,  desc: 'Light, pillowy Ghanaian fried doughnuts dusted in sugar — dangerously addictive.',                  image: '/images/bofrot.jpg',           category: 'Sweets',      popular: true  },
 ];
 
-const CATEGORIES = ['All', 'Rice Dishes', 'Swallows', 'Proteins', 'Sides', 'Sweets'];
-
 const PARTY_PERKS = [
   'Feeds 20 to 200+ guests', 'Customisable menu selection',
   'Fresh prepared on the day', 'Setup & serving available',
@@ -37,37 +35,44 @@ const fadeUp = (delay = 0) => ({
 
 const Menu = () => {
   const navigate = useNavigate();
-
-  // Pull everything from CartContext — single source of truth
   const { cart, addToCart, removeFromCart, updateCartItem, total, itemCount } = useCart();
 
   const [menuItems,      setMenuItems]      = useState(FALLBACK_MENU);
   const [activeCategory, setActiveCategory] = useState('All');
   const [cartOpen,       setCartOpen]       = useState(false);
+  const [categories,     setCategories]     = useState(['All', 'Rice Dishes', 'Swallows', 'Proteins', 'Sides', 'Sweets']);
 
   useEffect(() => {
-    // cache-busting param forces fresh data past Cloudflare/browser cache
     fetch(`${API_BASE}/api/menu?t=${Date.now()}`, { cache: 'no-store' })
       .then(r => r.json())
-      .then(data => { if (Array.isArray(data) && data.length > 0) setMenuItems(data); })
-      .catch(() => {}); // silently keep fallback data on network error
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          // FIXED: MongoDB returns _id, not id — normalize so cart works correctly
+          const normalized = data.map(item => ({ ...item, id: item._id || item.id }));
+          setMenuItems(normalized);
+
+          // Build category list dynamically from DB items
+          const cats = ['All', ...new Set(normalized.map(i => i.category).filter(Boolean))];
+          setCategories(cats);
+        }
+      })
+      .catch(() => {}); // silently keep fallback on network error
   }, []);
+
   const partyRef = useRef(null);
 
   const filtered = activeCategory === 'All'
-    ? menuItems
-    : menuItems.filter(i => i.category === activeCategory);
+    ? menuItems.filter(i => i.available !== false)
+    : menuItems.filter(i => i.category === activeCategory && i.available !== false);
 
-  // Calculates new quantity and removes item if it hits zero
   const updateQty = (id, delta) => {
-    const item   = cart.find(c => c.id === id);
+    const item = cart.find(c => c.id === id);
     if (!item) return;
     const newQty = item.quantity + delta;
     if (newQty <= 0) { removeFromCart(id); return; }
     updateCartItem(id, newQty);
   };
 
-  // Saves customer info to localStorage so Checkout page can read it
   const handleCheckout = () => {
     setCartOpen(false);
     navigate('/checkout');
@@ -114,7 +119,7 @@ const Menu = () => {
       {/* ── CATEGORY FILTER ── */}
       <div className="bg-white border-b border-amber-100 sticky top-0 z-40 px-6 py-3">
         <div className="max-w-6xl mx-auto flex gap-3 overflow-x-auto hide-scroll pb-0.5">
-          {CATEGORIES.map(cat => (
+          {categories.map(cat => (
             <button key={cat} onClick={() => setActiveCategory(cat)}
               className={`px-5 py-2 rounded-full border-2 font-black text-xs tracking-widest uppercase whitespace-nowrap transition-all ${activeCategory === cat ? 'text-white' : 'text-amber-900 border-amber-200 bg-white hover:border-red-700 hover:text-red-700'}`}
               style={activeCategory === cat ? { background: '#c0392b', borderColor: '#c0392b' } : {}}>

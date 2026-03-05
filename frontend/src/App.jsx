@@ -17,11 +17,12 @@ const Layout = () => {
       {!isAdminRoute && <Navigation />}
       <main className="flex-1">
         <Routes>
-          <Route path="/"                                element={<Home />}              />
-          <Route path="/menu"                            element={<Menu />}              />
-          <Route path="/checkout"                        element={<Checkout />}          />
-          <Route path="/order-confirmation/:orderNumber" element={<OrderConfirmation />} />
-          <Route path="/owner"                           element={<Admin />}             />
+          <Route path="/"                   element={<Home />}              />
+          <Route path="/menu"               element={<Menu />}              />
+          <Route path="/checkout"           element={<Checkout />}          />
+          {/* FIXED: was /order-confirmation/:orderNumber — Stripe returns query params not a path param */}
+          <Route path="/order-confirmation" element={<OrderConfirmation />} />
+          <Route path="/owner"              element={<Admin />}             />
         </Routes>
       </main>
       {!isAdminRoute && <Footer />}
