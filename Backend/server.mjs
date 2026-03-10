@@ -41,7 +41,6 @@ app.use(errorHandler);
 const startServer = async () => {
   await connectDB();
   app.listen(PORT, () => {
-    console.log(`KEY STARTS WITH: ${process.env.STRIPE_SECRET_KEY?.slice(0, 7)}`);
     console.log(`✅ Server running on http://localhost:${PORT}`);
   });
 };
