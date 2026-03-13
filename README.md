@@ -150,6 +150,8 @@ evaanshonu@gmail.com
 blackbird77ad@gmail.com
 
 AECHITECTURE:
+
+this is my, my current issues are, frontend data for menu and /owner not in sync. wrong data fetch
 User places order
       ↓
 Frontend calls backend /payments/create
