@@ -14,10 +14,12 @@ const orderSchema = new mongoose.Schema({
   total:     { type: Number, required: true, min: 0 },
   method:    { type: String, required: true, enum: ['pickup', 'delivery'] },
   address:   { type: String, default: '' },
-  status:    { type: String, default: 'pending', enum: ['pending', 'preparing', 'ready', 'delivered'] },
+  status:    { type: String, default: 'pending', enum: ['pending','paid','preparing','ready','completed'] },
+  stripePaymentIntent: { type: String, required: true },
   paymentId: { type: String, default: null },
 }, { timestamps: true });
 
+// Auto-generate orderId
 orderSchema.pre('save', async function (next) {
   if (!this.isNew) return next();
   const count = await mongoose.model('Order').countDocuments();

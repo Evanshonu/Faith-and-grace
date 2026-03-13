@@ -3,6 +3,32 @@ import nodemailer from 'nodemailer';
 
 const VALID_STATUSES = ['pending', 'preparing', 'ready', 'delivered'];
 
+/* ─── WhatsApp Message Generator ──────────────────────────────────────────────────────────── */
+
+const OWNER_WHATSAPP = "233501657205";
+
+const buildWhatsAppMessage = (order) => {
+
+  const itemsList = order.items
+    .map(i => `• ${i.name} x${i.qty}`)
+    .join('\n');
+
+  const message = `
+NEW ORDER RECEIVED
+
+Order ID: ${order.orderId}
+Customer: ${order.customer}
+Phone: ${order.phone}
+
+Items:
+${itemsList}
+
+Total: $${order.total.toFixed(2)}
+`;
+
+  return `https://wa.me/${OWNER_WHATSAPP}?text=${encodeURIComponent(message)}`;
+};
+
 /* ─── EMAIL ──────────────────────────────────────────────────────────── */
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -98,6 +124,7 @@ const createNewOrder = async (req, res) => {
     items, total, method, address, payment_intent_id,
   } = req.body;
 
+  // Prevent duplicate orders if payment already exists
   if (payment_intent_id) {
     const existing = await Order.findOne({ paymentId: payment_intent_id });
     if (existing) return res.status(200).json(existing);
@@ -114,10 +141,23 @@ const createNewOrder = async (req, res) => {
     paymentId: payment_intent_id || null,
   });
 
+  // ------------------- SOCKET.IO EMIT -------------------
+  const io = req.app.get("io");
+  if (io) {
+    io.emit("new-order", order); // send to all connected kitchen screens
+  }
+
+  // Send email notifications
   sendOrderNotifications(order);
 
-  res.status(201).json(order);
+  const whatsappURL = buildWhatsAppMessage(order);
+
+res.status(201).json({
+  ...order.toObject(),
+  whatsappURL
+});
 };
+
 
 const updateOrderStatus = async (req, res) => {
   const { id }     = req.params;
@@ -135,6 +175,8 @@ const updateOrderStatus = async (req, res) => {
 
   res.json(updated);
 };
+
+
 
 const getOrderByPayment = async (req, res) => {
   const order = await Order.findOne({ paymentId: req.params.paymentIntentId });

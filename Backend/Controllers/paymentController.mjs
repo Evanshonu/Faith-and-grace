@@ -1,55 +1,176 @@
-import Stripe from 'stripe';
+import Stripe from "stripe";
+import Order from "../Models/Order.mjs";
+import sendEmail from "../utils/sendEmail.mjs";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// Returns the publishable key to the frontend so it can initialize Stripe.js
-const getStripeConfig = (req, res) => {
-  res.json({ publishableKey: process.env.STRIPE_PUBLISHABLE_KEY });
-};
-
-// Creates a payment intent — Stripe returns a clientSecret the frontend uses to render the card form
-const createPaymentIntent = async (req, res) => {
+/*
+-----------------------------------------
+CREATE PAYMENT INTENT
+-----------------------------------------
+Frontend calls this after creating order
+*/
+export const createPaymentIntent = async (req, res) => {
   try {
-    const { amount, customer_name, customer_email } = req.body;
 
-    if (!amount || isNaN(amount) || Number(amount) <= 0)
-      return res.status(400).json({ error: 'Valid amount is required' });
+    const { amount, orderId, currency = "usd" } = req.body;
+
+    if (!amount || !orderId) {
+      return res.status(400).json({
+        message: "Amount and orderId are required",
+      });
+    }
 
     const paymentIntent = await stripe.paymentIntents.create({
-      // Stripe requires amount in CENTS — multiply dollars by 100
-      amount:   Math.round(Number(amount) * 100),
-      currency: 'usd',
+      amount: Math.round(amount * 100), // Stripe expects cents
+      currency,
+
       metadata: {
-        customer_name:  customer_name  || '',
-        customer_email: customer_email || '',
+        orderId: orderId,
       },
     });
 
-    res.json({ clientSecret: paymentIntent.client_secret });
-  } catch (err) {
-    console.error('Stripe error:', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(200).json({
+      clientSecret: paymentIntent.client_secret,
+    });
+
+  } catch (error) {
+
+    console.error("❌ PaymentIntent creation failed:", error);
+
+    res.status(500).json({
+      message: "Failed to create payment",
+    });
+
   }
 };
 
-// Verifies the payment actually succeeded before saving the order
-const confirmPayment = async (req, res) => {
+
+/*
+-----------------------------------------
+STRIPE WEBHOOK HANDLER
+-----------------------------------------
+Stripe calls this endpoint after payment
+*/
+export const stripeWebhook = async (req, res) => {
+
+  const sig = req.headers["stripe-signature"];
+  let event;
+
   try {
-    const { payment_intent_id } = req.body;
 
-    if (!payment_intent_id)
-      return res.status(400).json({ error: 'Payment intent ID is required' });
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.STRIPE_SIGNING_SECRET
+    );
 
-    const paymentIntent = await stripe.paymentIntents.retrieve(payment_intent_id);
-
-    if (paymentIntent.status !== 'succeeded')
-      return res.status(400).json({ error: `Payment not completed. Status: ${paymentIntent.status}` });
-
-    res.json({ success: true, paymentIntent });
   } catch (err) {
-    console.error('Stripe confirm error:', err.message);
-    res.status(500).json({ error: err.message });
-  }
-};
 
-export { getStripeConfig, createPaymentIntent, confirmPayment };
+    console.error("❌ Stripe webhook verification failed:", err.message);
+
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+
+  }
+
+  switch (event.type) {
+
+    /*
+    -----------------------------------------
+    PAYMENT SUCCESS
+    -----------------------------------------
+    */
+    case "payment_intent.succeeded": {
+
+      const paymentIntent = event.data.object;
+
+      try {
+
+        const orderId = paymentIntent.metadata.orderId;
+
+        if (!orderId) {
+          console.warn("⚠️ Missing orderId in metadata");
+          break;
+        }
+
+        const order = await Order.findById(orderId);
+
+        if (!order) {
+          console.warn("⚠️ Order not found:", orderId);
+          break;
+        }
+
+        // Prevent duplicate processing
+        if (order.status === "paid") {
+          console.log("⚠️ Order already processed:", order._id);
+          break;
+        }
+
+        // Update order
+        order.status = "paid";
+        order.paymentId = paymentIntent.id;
+
+        await order.save();
+
+        console.log("✅ Order marked as PAID:", order._id);
+
+        /*
+        -----------------------------------------
+        SEND CUSTOMER EMAIL
+        -----------------------------------------
+        */
+        try {
+
+          await sendEmail({
+            to: order.email,
+            subject: "Order Confirmation - Faith & Grace",
+            text: `
+Thank you for your order!
+
+Order ID: ${order._id}
+Amount: ${order.amount}
+
+Your payment has been successfully received.
+
+Faith & Grace
+            `,
+          });
+
+          console.log("📧 Confirmation email sent to:", order.email);
+
+        } catch (emailError) {
+
+          console.error("❌ Email failed:", emailError.message);
+
+        }
+
+      } catch (dbError) {
+
+        console.error("❌ Database update error:", dbError);
+
+      }
+
+      break;
+    }
+
+
+    /*
+    -----------------------------------------
+    PAYMENT FAILED
+    -----------------------------------------
+    */
+    case "payment_intent.payment_failed": {
+
+      const failedIntent = event.data.object;
+
+      console.warn("⚠️ Payment failed:", failedIntent.id);
+
+      break;
+    }
+
+    default:
+      console.log(`Unhandled Stripe event type: ${event.type}`);
+  }
+
+  res.json({ received: true });
+};

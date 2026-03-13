@@ -1,27 +1,33 @@
-import axios from 'axios';
+import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  "https://faith-and-grace.onrender.com";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
-  },
+    "Content-Type": "application/json"
+  }
 });
 
 export const menuAPI = {
-  getAll: () => api.get('/menu-items/'),
-  getByCategory: (category) => api.get(`/menu-items/?category=${category}`),
-  getById: (id) => api.get(`/menu-items/${id}/`),
+  getAll: () => api.get("/api/menu"),
+  create: (data) => api.post("/api/menu", data),
+  update: (id, data) => api.patch(`/api/menu/${id}`, data),
+  delete: (id) => api.delete(`/api/menu/${id}`)
 };
 
 export const orderAPI = {
-  create: (orderData) => api.post('/orders/', orderData),
-  getById: (id) => api.get(`/orders/${id}/`),
-  confirmPayment: (id, confirmationCode) =>
-    api.post(`/orders/${id}/confirm_payment/`, { confirmation_code: confirmationCode }),
+  create: (data) => api.post("/api/orders", data),
+  getAll: () => api.get("/api/orders"),
+  getByEmail: (email) => api.get(`/api/orders/customer/${email}`),
   updateStatus: (id, status) =>
-    api.post(`/orders/${id}/update_status/`, { status }),
+    api.patch(`/api/orders/${id}`, { status })
+};
+
+export const paymentAPI = {
+  createIntent: (data) => api.post("/payments/create", data)
 };
 
 export default api;

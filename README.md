@@ -148,3 +148,22 @@ Email: gnigriel@yahoo.com
 DEVELOPERS:
 evaanshonu@gmail.com
 blackbird77ad@gmail.com
+
+AECHITECTURE:
+User places order
+      ↓
+Frontend calls backend /payments/create
+      ↓
+Stripe PaymentIntent created
+      ↓
+User completes payment on frontend
+      ↓
+Stripe sends webhook → backend
+      ↓
+Backend verifies webhook
+      ↓
+Order marked PAID in MongoDB
+      ↓
+Email sent to customer
+      ↓
+Owner dashboard sees paid order
