@@ -10,6 +10,7 @@ import authRoutes from './Routes/auth.mjs';
 import menuRoutes from './Routes/menu.mjs';
 import orderRoutes from './Routes/orders.mjs';
 import paymentRoutes from './Routes/payments.mjs';
+import webhookRoutes from './Routes/webhook.mjs';
 
 dotenv.config();
 
@@ -17,6 +18,9 @@ const app = express();
 const PORT = process.env.PORT || 8000;
 
 const ALLOWED_ORIGINS = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+    'http://localhost:8080',
   'https://faith-and-grace-site.pages.dev',
   'https://www.graceefaith.com',
   'https://graceefaith.com',
@@ -30,6 +34,7 @@ app.use(cors({ origin: ALLOWED_ORIGINS, credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 
 // Routes
+app.use('/webhook', webhookRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/orders', orderRoutes);

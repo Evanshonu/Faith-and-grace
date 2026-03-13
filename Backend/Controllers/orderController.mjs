@@ -38,7 +38,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const sendOrderNotifications = async (order) => {
+export const sendOrderNotifications = async (order) => {
   const itemsList = order.items
     .map(i => `  • ${i.name} x${i.qty}  — $${(i.price * i.qty).toFixed(2)}`)
     .join('\n');
@@ -133,14 +133,14 @@ const createNewOrder = async (req, res) => {
   const order = await Order.create({
     customer:  customer_name,
     phone:     customer_phone,
-    email:     customer_email   || '',
+    email:     customer_email        || '',
     items,
     total,
     method,
-    address:   address          || '',
-    paymentId: payment_intent_id || null,
+    address:   address               || '',
+    paymentId: payment_intent_id     || null,
+    stripePaymentIntent: payment_intent_id || 'manual',
   });
-
   // ------------------- SOCKET.IO EMIT -------------------
   const io = req.app.get("io");
   if (io) {

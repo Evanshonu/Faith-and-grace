@@ -10,45 +10,45 @@ import {
 
 /* ─── CONSTANTS ──────────────────────────────────────────────────────── */
 const INITIAL_MENU = [
-  { id: 1, name: 'Jollof Rice',     price: 12.99, category: 'Rice Dishes', desc: 'Smoky tomato-based rice slow-cooked with spices.',          image: '/images/jollof.jpg',           available: true },
-  { id: 2, name: 'Waakye',          price: 11.99, category: 'Rice Dishes', desc: 'Hearty Ghanaian rice & beans with rich stew.',              image: '/images/waakye.jpg',           available: true },
-  { id: 3, name: 'Fried Rice',      price: 12.99, category: 'Rice Dishes', desc: 'Golden stir-fried rice with vegetables and seasoning.',     image: '/images/friedrice.webp',       available: true },
-  { id: 4, name: 'Fufu',            price: 13.99, category: 'Swallows',    desc: 'Pounded cassava & yam in fragrant light soup.',             image: '/images/fufu.jpg',             available: true },
-  { id: 5, name: 'Banku & Tilapia', price: 15.99, category: 'Swallows',    desc: 'Fermented corn dumplings with grilled tilapia.',            image: '/images/bankuandtilapia.webp', available: true },
-  { id: 6, name: 'Fried Fish',      price: 10.99, category: 'Proteins',    desc: 'Crispy golden fried fish with West African spices.',        image: '/images/friedfish.jpg',        available: true },
-  { id: 7, name: 'Pepper Sauce',    price: 3.99,  category: 'Sides',       desc: 'Fiery house-made Ghanaian pepper sauce.',                   image: '/images/peppersauce.jpg',      available: true },
-  { id: 8, name: 'Bofrot',          price: 6.99,  category: 'Sweets',      desc: 'Pillowy Ghanaian fried doughnuts dusted in sugar.',         image: '/images/bofrot.jpg',           available: true },
+  { id: 1, name: 'Jollof Rice', price: 12.99, category: 'Rice Dishes', desc: 'Smoky tomato-based rice slow-cooked with spices.', image: '/images/jollof.jpg', available: true },
+  { id: 2, name: 'Waakye', price: 11.99, category: 'Rice Dishes', desc: 'Hearty Ghanaian rice & beans with rich stew.', image: '/images/waakye.jpg', available: true },
+  { id: 3, name: 'Fried Rice', price: 12.99, category: 'Rice Dishes', desc: 'Golden stir-fried rice with vegetables and seasoning.', image: '/images/friedrice.webp', available: true },
+  { id: 4, name: 'Fufu', price: 13.99, category: 'Swallows', desc: 'Pounded cassava & yam in fragrant light soup.', image: '/images/fufu.jpg', available: true },
+  { id: 5, name: 'Banku & Tilapia', price: 15.99, category: 'Swallows', desc: 'Fermented corn dumplings with grilled tilapia.', image: '/images/bankuandtilapia.webp', available: true },
+  { id: 6, name: 'Fried Fish', price: 10.99, category: 'Proteins', desc: 'Crispy golden fried fish with West African spices.', image: '/images/friedfish.jpg', available: true },
+  { id: 7, name: 'Pepper Sauce', price: 3.99, category: 'Sides', desc: 'Fiery house-made Ghanaian pepper sauce.', image: '/images/peppersauce.jpg', available: true },
+  { id: 8, name: 'Bofrot', price: 6.99, category: 'Sweets', desc: 'Pillowy Ghanaian fried doughnuts dusted in sugar.', image: '/images/bofrot.jpg', available: true },
 ];
 
 const INITIAL_ORDERS = [
-  { id: 'ORD-001', customer: 'Abena Mensah',  phone: '973-555-0101', items: [{ name: 'Jollof Rice',      qty: 2, price: 12.99 }, { name: 'Fried Fish',    qty: 1, price: 10.99 }], total: 36.97, method: 'pickup',   status: 'preparing', time: '2 min ago',  date: '2025-01-15 12:30' },
-  { id: 'ORD-002', customer: 'Kofi Asante',   phone: '973-555-0202', items: [{ name: 'Waakye',           qty: 1, price: 11.99 }, { name: 'Pepper Sauce', qty: 2, price:  3.99 }], total: 19.97, method: 'delivery', status: 'pending',   time: '5 min ago',  date: '2025-01-15 12:27' },
-  { id: 'ORD-003', customer: 'Serena Mills',  phone: '862-555-0303', items: [{ name: 'Banku & Tilapia',  qty: 2, price: 15.99 }],                                                  total: 31.98, method: 'pickup',   status: 'ready',     time: '12 min ago', date: '2025-01-15 12:20' },
-  { id: 'ORD-004', customer: 'Marcus Brown',  phone: '201-555-0404', items: [{ name: 'Fufu',             qty: 1, price: 13.99 }, { name: 'Bofrot',       qty: 2, price:  6.99 }], total: 27.97, method: 'delivery', status: 'delivered', time: '1 hr ago',   date: '2025-01-15 11:30' },
-  { id: 'ORD-005', customer: 'Ama Owusu',     phone: '973-555-0505', items: [{ name: 'Jollof Rice',      qty: 3, price: 12.99 }, { name: 'Pepper Sauce', qty: 1, price:  3.99 }], total: 42.96, method: 'pickup',   status: 'delivered', time: '2 hrs ago',  date: '2025-01-15 10:30' },
-  { id: 'ORD-006', customer: 'David Osei',    phone: '862-555-0606', items: [{ name: 'Fried Rice',       qty: 2, price: 12.99 }, { name: 'Fried Fish',   qty: 2, price: 10.99 }], total: 47.96, method: 'delivery', status: 'delivered', time: '3 hrs ago',  date: '2025-01-15 09:30' },
-  { id: 'ORD-007', customer: 'Yaa Darko',     phone: '201-555-0707', items: [{ name: 'Waakye',           qty: 2, price: 11.99 }],                                                  total: 23.98, method: 'pickup',   status: 'delivered', time: 'Jan 14',     date: '2025-01-14 18:00' },
-  { id: 'ORD-008', customer: 'Nana Boateng',  phone: '973-555-0808', items: [{ name: 'Banku & Tilapia',  qty: 1, price: 15.99 }, { name: 'Bofrot',       qty: 3, price:  6.99 }], total: 36.96, method: 'delivery', status: 'delivered', time: 'Jan 14',     date: '2025-01-14 14:00' },
+  { id: 'ORD-001', customer: 'Abena Mensah', phone: '973-555-0101', items: [{ name: 'Jollof Rice', qty: 2, price: 12.99 }, { name: 'Fried Fish', qty: 1, price: 10.99 }], total: 36.97, method: 'pickup', status: 'preparing', time: '2 min ago', date: '2025-01-15 12:30' },
+  { id: 'ORD-002', customer: 'Kofi Asante', phone: '973-555-0202', items: [{ name: 'Waakye', qty: 1, price: 11.99 }, { name: 'Pepper Sauce', qty: 2, price: 3.99 }], total: 19.97, method: 'delivery', status: 'pending', time: '5 min ago', date: '2025-01-15 12:27' },
+  { id: 'ORD-003', customer: 'Serena Mills', phone: '862-555-0303', items: [{ name: 'Banku & Tilapia', qty: 2, price: 15.99 }], total: 31.98, method: 'pickup', status: 'ready', time: '12 min ago', date: '2025-01-15 12:20' },
+  { id: 'ORD-004', customer: 'Marcus Brown', phone: '201-555-0404', items: [{ name: 'Fufu', qty: 1, price: 13.99 }, { name: 'Bofrot', qty: 2, price: 6.99 }], total: 27.97, method: 'delivery', status: 'delivered', time: '1 hr ago', date: '2025-01-15 11:30' },
+  { id: 'ORD-005', customer: 'Ama Owusu', phone: '973-555-0505', items: [{ name: 'Jollof Rice', qty: 3, price: 12.99 }, { name: 'Pepper Sauce', qty: 1, price: 3.99 }], total: 42.96, method: 'pickup', status: 'delivered', time: '2 hrs ago', date: '2025-01-15 10:30' },
+  { id: 'ORD-006', customer: 'David Osei', phone: '862-555-0606', items: [{ name: 'Fried Rice', qty: 2, price: 12.99 }, { name: 'Fried Fish', qty: 2, price: 10.99 }], total: 47.96, method: 'delivery', status: 'delivered', time: '3 hrs ago', date: '2025-01-15 09:30' },
+  { id: 'ORD-007', customer: 'Yaa Darko', phone: '201-555-0707', items: [{ name: 'Waakye', qty: 2, price: 11.99 }], total: 23.98, method: 'pickup', status: 'delivered', time: 'Jan 14', date: '2025-01-14 18:00' },
+  { id: 'ORD-008', customer: 'Nana Boateng', phone: '973-555-0808', items: [{ name: 'Banku & Tilapia', qty: 1, price: 15.99 }, { name: 'Bofrot', qty: 3, price: 6.99 }], total: 36.96, method: 'delivery', status: 'delivered', time: 'Jan 14', date: '2025-01-14 14:00' },
 ];
 
 const CATEGORIES = ['Rice Dishes', 'Swallows', 'Proteins', 'Sides', 'Sweets'];
 
 const STATUS_CONFIG = {
-  pending:   { label: 'Pending',   color: 'bg-yellow-100 text-yellow-700 border-yellow-200', dot: 'bg-yellow-500', icon: Clock       },
-  preparing: { label: 'Preparing', color: 'bg-blue-100 text-blue-700 border-blue-200',        dot: 'bg-blue-500',   icon: Package     },
-  ready:     { label: 'Ready',     color: 'bg-green-100 text-green-700 border-green-200',      dot: 'bg-green-500',  icon: CheckCircle },
-  delivered: { label: 'Delivered', color: 'bg-stone-100 text-stone-500 border-stone-200',      dot: 'bg-stone-400',  icon: Truck       },
+  pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-700 border-yellow-200', dot: 'bg-yellow-500', icon: Clock },
+  preparing: { label: 'Preparing', color: 'bg-blue-100 text-blue-700 border-blue-200', dot: 'bg-blue-500', icon: Package },
+  ready: { label: 'Ready', color: 'bg-green-100 text-green-700 border-green-200', dot: 'bg-green-500', icon: CheckCircle },
+  delivered: { label: 'Delivered', color: 'bg-stone-100 text-stone-500 border-stone-200', dot: 'bg-stone-400', icon: Truck },
 };
 
 const NEXT_STATUS = { pending: 'preparing', preparing: 'ready', ready: 'delivered' };
 
-const EMPTY_FORM = { name: '', price: '', category: 'Rice Dishes', desc: '', image: '', available: true };
+const EMPTY_FORM = { name: '', price: '', category: 'Rice Dishes', desc: '', image: '', available: true, sizes: [] };
 
 const TABS = [
-  { key: 'overview', label: 'Overview',      icon: LayoutDashboard },
-  { key: 'menu',     label: 'Menu Items',    icon: UtensilsCrossed },
-  { key: 'orders',   label: 'Active Orders', icon: ShoppingBag     },
-  { key: 'past',     label: 'Past Orders',   icon: History         },
+  { key: 'overview', label: 'Overview', icon: LayoutDashboard },
+  { key: 'menu', label: 'Menu Items', icon: UtensilsCrossed },
+  { key: 'orders', label: 'Active Orders', icon: ShoppingBag },
+  { key: 'past', label: 'Past Orders', icon: History },
 ];
 
 const inputStyle = {
@@ -57,24 +57,24 @@ const inputStyle = {
   fontFamily: 'inherit',
 };
 
-const focusRed  = e => { e.target.style.borderColor = '#c0392b'; };
+const focusRed = e => { e.target.style.borderColor = '#c0392b'; };
 const blurReset = e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; };
 
 /* ─── LOGIN PAGE ─────────────────────────────────────────────────────── */
 const LoginPage = ({ onLogin }) => {
-  const [pw, setPw]         = useState('');
-  const [show, setShow]     = useState(false);
-  const [error, setError]   = useState('');
+  const [pw, setPw] = useState('');
+  const [show, setShow] = useState(false);
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     setLoading(true);
     setError('');
     try {
-      const res  = await fetch('https://faith-and-grace.onrender.com/api/auth/login', {
-        method:  'POST',
+      const res = await fetch('https://faith-and-grace.onrender.com/api/auth/login', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ password: pw }),
+        body: JSON.stringify({ password: pw }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -190,16 +190,23 @@ const StatCard = ({ icon: Icon, label, value, sub, color }) => (
 
 /* ─── MENU FORM MODAL ────────────────────────────────────────────────── */
 const MenuFormModal = ({ item, categories: initCategories, onSave, onClose }) => {
-  const [form,        setForm]        = useState(item ?? EMPTY_FORM);
-  const [imgSource,   setImgSource]   = useState('url');   // 'url' | 'file' | 'drive'
-  const [preview,     setPreview]     = useState(item?.image ?? '');
-  const [categories,  setCategories]  = useState(initCategories);
-  const [newCat,      setNewCat]      = useState('');
-  const [showNewCat,  setShowNewCat]  = useState(false);
+  const [form, setForm] = useState(item ?? EMPTY_FORM);
+  const [imgSource, setImgSource] = useState('url');   // 'url' | 'file' | 'drive'
+  const [preview, setPreview] = useState(item?.image ?? '');
+  const [categories, setCategories] = useState(initCategories);
+  const [newCat, setNewCat] = useState('');
+  const [showNewCat, setShowNewCat] = useState(false);
   const fileRef = useRef(null);
 
-  const set   = (k, v) => setForm(f => ({ ...f, [k]: v }));
-  const valid = form.name.trim() && form.price && form.desc.trim();
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  const UNITS = ['g', 'kg', 'ml', 'L', 'pc'];
+  const addSize = () => set('sizes', [...(form.sizes || []), { label: '', quantity: '', unit: 'g', price: '' }]);
+  const updateSize = (i, k, v) => set('sizes', form.sizes.map((s, idx) => idx === i ? { ...s, [k]: v } : s));
+  const removeSize = i => set('sizes', form.sizes.filter((_, idx) => idx !== i));
+
+  const hasSizes = form.sizes && form.sizes.length > 0;
+  const valid = form.name.trim() && form.desc.trim() && (hasSizes || form.price);
 
   // Convert Google Drive share link → direct image URL
   const driveToImg = url => {
@@ -285,7 +292,7 @@ const MenuFormModal = ({ item, categories: initCategories, onSave, onClose }) =>
 
             {/* Source tabs */}
             <div className="flex gap-2 mb-3">
-              {[['url','🔗 URL'],['file','📁 Local File'],['drive','☁️ Drive']].map(([key, label]) => (
+              {[['url', '🔗 URL'], ['file', '📁 Local File'], ['drive', '☁️ Drive']].map(([key, label]) => (
                 <button key={key} type="button" onClick={() => setImgSource(key)}
                   className="flex-1 py-2 rounded-lg text-xs font-black uppercase tracking-wide transition-all"
                   style={imgSource === key
@@ -327,7 +334,7 @@ const MenuFormModal = ({ item, categories: initCategories, onSave, onClose }) =>
                 <input
                   placeholder="Paste Google Drive share link"
                   onBlur={e => handleDriveUrl(e.target.value)}
-                  onChange={e => { if (e.target.value === '') { setPreview(''); set('image', ''); }}}
+                  onChange={e => { if (e.target.value === '') { setPreview(''); set('image', ''); } }}
                   onFocus={focusRed}
                   className={iCls} style={inputStyle} />
                 <p className="text-xs text-stone-600">Paste the share link — it will be auto-converted to a direct image URL</p>
@@ -376,6 +383,59 @@ const MenuFormModal = ({ item, categories: initCategories, onSave, onClose }) =>
                 {categories.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
+          </div>
+
+          {/* ── SIZES ── */}
+          <div className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <span className="text-xs font-black tracking-widest uppercase text-stone-500">Size Variants</span>
+                <p className="text-xs text-stone-600 mt-0.5">If set, customers pick a size. Leave empty to use the base price above.</p>
+              </div>
+              <button type="button" onClick={addSize}
+                className="flex items-center gap-1 text-xs font-black px-2 py-1 rounded-lg transition-all"
+                style={{ background: 'rgba(230,126,34,0.15)', color: '#ff9a3c', border: '1px solid rgba(230,126,34,0.3)' }}>
+                <Plus size={12} /> Add Size
+              </button>
+            </div>
+
+            {(!form.sizes || form.sizes.length === 0) && (
+              <p className="text-xs text-stone-700 text-center py-2">No sizes — single price used</p>
+            )}
+
+            {(form.sizes || []).map((size, i) => (
+              <div key={i} className="grid grid-cols-12 gap-2 mb-2 items-center">
+                {/* Label */}
+                <input value={size.label} onChange={e => updateSize(i, 'label', e.target.value)}
+                  placeholder="Small" onFocus={focusRed} onBlur={blurReset}
+                  className="col-span-3 px-3 py-2 rounded-lg text-white text-xs outline-none"
+                  style={inputStyle} />
+                {/* Quantity */}
+                <input type="number" value={size.quantity} onChange={e => updateSize(i, 'quantity', e.target.value)}
+                  placeholder="250" onFocus={focusRed} onBlur={blurReset}
+                  className="col-span-2 px-3 py-2 rounded-lg text-white text-xs outline-none"
+                  style={inputStyle} />
+                {/* Unit */}
+                <select value={size.unit} onChange={e => updateSize(i, 'unit', e.target.value)}
+                  className="col-span-2 px-2 py-2 rounded-lg text-white text-xs outline-none"
+                  style={{ background: '#2a1a14', border: '2px solid rgba(255,255,255,0.1)', fontFamily: 'inherit' }}>
+                  {UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+                </select>
+                {/* Price */}
+                <input type="number" step="0.01" value={size.price} onChange={e => updateSize(i, 'price', e.target.value)}
+                  placeholder="9.99" onFocus={focusRed} onBlur={blurReset}
+                  className="col-span-4 px-3 py-2 rounded-lg text-white text-xs outline-none"
+                  style={inputStyle} />
+                {/* Remove */}
+                <button type="button" onClick={() => removeSize(i)}
+                  className="col-span-1 flex items-center justify-center text-stone-600 hover:text-red-400 transition-colors">
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
+            {form.sizes && form.sizes.length > 0 && (
+              <p className="text-xs text-stone-700 mt-2">Format: Label · Quantity · Unit · Price ($)</p>
+            )}
           </div>
 
           {/* Category manager */}
@@ -506,10 +566,10 @@ const DeleteConfirm = ({ item, onConfirm, onClose }) => (
 /* ─── ORDER CARD ─────────────────────────────────────────────────────── */
 const OrderCard = ({ order, onStatusChange, isPast }) => {
   const [expanded, setExpanded] = useState(false);
-  const cfg        = STATUS_CONFIG[order.status];
+  const cfg = STATUS_CONFIG[order.status];
   const nextStatus = NEXT_STATUS[order.status];
-  const orderId    = order._id || order.id;
-  const isReady    = order.status === 'ready';
+  const orderId = order._id || order.id;
+  const isReady = order.status === 'ready';
 
   return (
     <motion.div
@@ -615,15 +675,15 @@ const OrderCard = ({ order, onStatusChange, isPast }) => {
 const API_ADMIN = 'https://faith-and-grace.onrender.com';
 
 const Dashboard = ({ onLogout }) => {
-  const [tab,        setTab]        = useState('overview');
-  const [menu,       setMenu]       = useState([]);
-  const [orders,     setOrders]     = useState([]);
-  const [editItem,   setEditItem]   = useState(null);
-  const [showForm,   setShowForm]   = useState(false);
+  const [tab, setTab] = useState('overview');
+  const [menu, setMenu] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [editItem, setEditItem] = useState(null);
+  const [showForm, setShowForm] = useState(false);
   const [categories, setCategories] = useState(CATEGORIES);
   const [deleteItem, setDeleteItem] = useState(null);
-  const [search,     setSearch]     = useState('');
-  const [catFilter,  setCatFilter]  = useState('All');
+  const [search, setSearch] = useState('');
+  const [catFilter, setCatFilter] = useState('All');
 
   const token = localStorage.getItem('fg_admin_token');
   const authH = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
@@ -631,7 +691,7 @@ const Dashboard = ({ onLogout }) => {
   useEffect(() => {
     const loadMenu = async () => {
       try {
-        const res  = await fetch(`${API_ADMIN}/api/menu?t=${Date.now()}`, { cache: 'no-store' });
+        const res = await fetch(`${API_ADMIN}/api/menu?t=${Date.now()}`, { cache: 'no-store' });
         const data = await res.json();
         setMenu(Array.isArray(data) ? data : []);
       } catch (err) { console.error('Menu load failed:', err); }
@@ -639,7 +699,7 @@ const Dashboard = ({ onLogout }) => {
 
     const loadOrders = async () => {
       try {
-        const res  = await fetch(`${API_ADMIN}/api/orders`, { headers: authH });
+        const res = await fetch(`${API_ADMIN}/api/orders`, { headers: authH });
         const data = await res.json();
         setOrders(Array.isArray(data) ? data : []);
       } catch (err) { console.error('Orders load failed:', err); }
@@ -654,7 +714,7 @@ const Dashboard = ({ onLogout }) => {
   }, []);
 
   const activeOrders = orders.filter(o => o.status !== 'delivered');
-  const pastOrders   = orders.filter(o => o.status === 'delivered');
+  const pastOrders = orders.filter(o => o.status === 'delivered');
   const totalRevenue = pastOrders.reduce((s, o) => s + (o.total || 0), 0);
 
   const filteredMenu = menu.filter(({ name, category }) =>
@@ -664,7 +724,7 @@ const Dashboard = ({ onLogout }) => {
 
   const reloadMenu = async () => {
     try {
-      const res  = await fetch(`${API_ADMIN}/api/menu?t=${Date.now()}`, { cache: 'no-store' });
+      const res = await fetch(`${API_ADMIN}/api/menu?t=${Date.now()}`, { cache: 'no-store' });
       const data = await res.json();
       if (Array.isArray(data)) setMenu(data);
     } catch (err) { console.error('Menu reload failed:', err); }
@@ -673,8 +733,8 @@ const Dashboard = ({ onLogout }) => {
   const handleSave = async (data, updatedCategories) => {
     try {
       const isEdit = !!editItem;
-      const url    = isEdit ? `${API_ADMIN}/api/menu/${editItem._id}` : `${API_ADMIN}/api/menu`;
-      const res    = await fetch(url, { method: isEdit ? 'PUT' : 'POST', headers: authH, body: JSON.stringify(data) });
+      const url = isEdit ? `${API_ADMIN}/api/menu/${editItem._id}` : `${API_ADMIN}/api/menu`;
+      const res = await fetch(url, { method: isEdit ? 'PUT' : 'POST', headers: authH, body: JSON.stringify(data) });
       if (!res.ok) {
         const err = await res.json();
         alert(`Save failed: ${err.error || 'Unknown error'}`);
@@ -701,7 +761,7 @@ const Dashboard = ({ onLogout }) => {
 
   const reloadOrders = async () => {
     try {
-      const res  = await fetch(`${API_ADMIN}/api/orders`, { headers: authH });
+      const res = await fetch(`${API_ADMIN}/api/orders`, { headers: authH });
       const data = await res.json();
       if (Array.isArray(data)) setOrders(data);
     } catch (err) { console.error('Orders reload failed:', err); }
@@ -718,14 +778,14 @@ const Dashboard = ({ onLogout }) => {
     } catch (err) { console.error('Status update failed:', err); }
   };
 
-  const openEdit  = item => { setEditItem(item); setShowForm(true); };
-  const openAdd   = ()   => { setEditItem(null); setShowForm(true); };
-  const closeForm = ()   => { setShowForm(false); setEditItem(null); };
+  const openEdit = item => { setEditItem(item); setShowForm(true); };
+  const openAdd = () => { setEditItem(null); setShowForm(true); };
+  const closeForm = () => { setShowForm(false); setEditItem(null); };
 
   const tabCounts = {
-    menu:   menu.length,
+    menu: menu.length,
     orders: activeOrders.length,
-    past:   pastOrders.length,
+    past: pastOrders.length,
   };
 
   return (
@@ -804,9 +864,9 @@ const Dashboard = ({ onLogout }) => {
             </h1>
             <p className="text-xs text-stone-500 mt-0.5">
               {tab === 'overview' && 'Your restaurant at a glance'}
-              {tab === 'menu'     && `${menu.length} dishes · ${menu.filter(i => i.available).length} available`}
-              {tab === 'orders'   && `${activeOrders.length} order${activeOrders.length !== 1 ? 's' : ''} need attention`}
-              {tab === 'past'     && `${pastOrders.length} completed orders · $${totalRevenue.toFixed(2)} earned`}
+              {tab === 'menu' && `${menu.length} dishes · ${menu.filter(i => i.available).length} available`}
+              {tab === 'orders' && `${activeOrders.length} order${activeOrders.length !== 1 ? 's' : ''} need attention`}
+              {tab === 'past' && `${pastOrders.length} completed orders · $${totalRevenue.toFixed(2)} earned`}
             </p>
           </div>
           {tab === 'menu' && (
@@ -826,10 +886,10 @@ const Dashboard = ({ onLogout }) => {
           {tab === 'overview' && (
             <div className="flex flex-col gap-8">
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard icon={DollarSign}      label="Total Revenue"    value={`$${totalRevenue.toFixed(0)}`}           sub="From past orders"                             color="#22c55e" />
-                <StatCard icon={ShoppingBag}     label="Active Orders"    value={activeOrders.length}                     sub="Needs attention"                              color="#f59e0b" />
-                <StatCard icon={UtensilsCrossed} label="Menu Items"       value={menu.length}                             sub={`${menu.filter(i => i.available).length} available`} color="#3b82f6" />
-                <StatCard icon={History}         label="Orders Completed" value={pastOrders.length}                       sub="All time"                                     color="#a855f7" />
+                <StatCard icon={DollarSign} label="Total Revenue" value={`$${totalRevenue.toFixed(0)}`} sub="From past orders" color="#22c55e" />
+                <StatCard icon={ShoppingBag} label="Active Orders" value={activeOrders.length} sub="Needs attention" color="#f59e0b" />
+                <StatCard icon={UtensilsCrossed} label="Menu Items" value={menu.length} sub={`${menu.filter(i => i.available).length} available`} color="#3b82f6" />
+                <StatCard icon={History} label="Orders Completed" value={pastOrders.length} sub="All time" color="#a855f7" />
               </div>
 
               {/* Recent active orders */}
@@ -939,18 +999,28 @@ const Dashboard = ({ onLogout }) => {
                         </div>
                       </div>
                       <div className="p-4">
-                        <p className="text-stone-500 text-xs leading-relaxed mb-4 line-clamp-2">{item.desc}</p>
+                        <p className="text-stone-500 text-xs leading-relaxed mb-2 line-clamp-2">{item.desc}</p>
+                        {item.sizes && item.sizes.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mb-3">
+                            {item.sizes.map((s, i) => (
+                              <span key={i} className="text-xs px-2 py-0.5 rounded-full font-black"
+                                style={{ background: 'rgba(255,154,60,0.1)', color: '#ff9a3c', border: '1px solid rgba(255,154,60,0.2)' }}>
+                                {s.label} {s.quantity}{s.unit} · ${Number(s.price).toFixed(2)}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                         <div className="flex gap-2">
                           {/* Toggle availability */}
                           <button
                             onClick={async () => {
-                            const updated = { ...item, available: !item.available };
-                            try {
-                              const r = await fetch(`${API_ADMIN}/api/menu/${item._id}`, { method: 'PUT', headers: authH, body: JSON.stringify(updated) });
-                              if (r.ok) await reloadMenu();
-                            } catch {}
-                            setMenu(m => m.map(i => (i._id || i.id) === (item._id || item.id) ? updated : i));
-                          }}
+                              const updated = { ...item, available: !item.available };
+                              try {
+                                const r = await fetch(`${API_ADMIN}/api/menu/${item._id}`, { method: 'PUT', headers: authH, body: JSON.stringify(updated) });
+                                if (r.ok) await reloadMenu();
+                              } catch { }
+                              setMenu(m => m.map(i => (i._id || i.id) === (item._id || item.id) ? updated : i));
+                            }}
                             className={`flex items-center gap-1.5 flex-1 py-2 rounded-xl text-xs font-black uppercase transition-all justify-center ${item.available ? 'text-green-400 hover:bg-green-500/10' : 'text-red-400 hover:bg-red-500/10'}`}
                             style={{ border: item.available ? '1px solid rgba(34,197,94,0.25)' : '1px solid rgba(239,68,68,0.25)' }}
                           >
@@ -1016,8 +1086,8 @@ const Dashboard = ({ onLogout }) => {
             <div>
               <div className="grid grid-cols-3 gap-4 mb-6">
                 {[
-                  { value: `$${totalRevenue.toFixed(2)}`,                                              label: 'Total Earned',       color: 'text-green-400' },
-                  { value: pastOrders.length,                                                           label: 'Orders Delivered',   color: 'text-white'     },
+                  { value: `$${totalRevenue.toFixed(2)}`, label: 'Total Earned', color: 'text-green-400' },
+                  { value: pastOrders.length, label: 'Orders Delivered', color: 'text-white' },
                   { value: `$${pastOrders.length ? (totalRevenue / pastOrders.length).toFixed(2) : '0.00'}`, label: 'Avg. Order Value', color: 'text-[#ff9a3c]' },
                 ].map(({ value, label, color }) => (
                   <div key={label} className="rounded-2xl p-5 text-center"
@@ -1040,7 +1110,7 @@ const Dashboard = ({ onLogout }) => {
 
       {/* ── MODALS ── */}
       <AnimatePresence>
-        {showForm   && <MenuFormModal item={editItem}   categories={categories} onSave={handleSave}   onClose={closeForm}               />}
+        {showForm && <MenuFormModal item={editItem} categories={categories} onSave={handleSave} onClose={closeForm} />}
         {deleteItem && <DeleteConfirm item={deleteItem} onConfirm={handleDelete} onClose={() => setDeleteItem(null)} />}
       </AnimatePresence>
     </div>

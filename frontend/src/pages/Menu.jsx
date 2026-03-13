@@ -9,54 +9,90 @@ import { useCart } from '../context/CartContext';
 
 const API_BASE = 'https://faith-and-grace.onrender.com';
 
-const FALLBACK_MENU = [
-  { id: 1, name: 'Jollof Rice',     price: 12.99, desc: 'Smoky tomato-based rice slow-cooked with spices — the crown jewel of West African cuisine.',      image: '/images/jollof.jpg',           category: 'Rice Dishes', popular: true  },
-  { id: 2, name: 'Waakye',          price: 11.99, desc: 'Hearty Ghanaian rice & beans cooked together, served with rich stew and garnishes.',                image: '/images/waakye.jpg',           category: 'Rice Dishes', popular: true  },
-  { id: 3, name: 'Fried Rice',      price: 12.99, desc: 'Golden stir-fried rice tossed with vegetables, eggs, and aromatic seasoning.',                      image: '/images/friedrice.webp',       category: 'Rice Dishes', popular: false },
-  { id: 4, name: 'Fufu',            price: 13.99, desc: 'Velvety pounded cassava & yam served in a fragrant, spicy light soup.',                             image: '/images/fufu.jpg',             category: 'Swallows',    popular: true  },
-  { id: 5, name: 'Banku & Tilapia', price: 15.99, desc: 'Fermented corn & cassava dumplings served with a perfectly grilled whole tilapia.',                 image: '/images/bankuandtilapia.webp', category: 'Swallows',    popular: true  },
-  { id: 6, name: 'Fried Fish',      price: 10.99, desc: 'Crispy golden fried fish seasoned with West African spices — a timeless favourite.',                image: '/images/friedfish.jpg',        category: 'Proteins',    popular: false },
-  { id: 7, name: 'Pepper Sauce',    price: 3.99,  desc: 'Fiery house-made Ghanaian pepper sauce — the perfect companion for any dish.',                      image: '/images/peppersauce.jpg',      category: 'Sides',       popular: false },
-  { id: 8, name: 'Bofrot',          price: 6.99,  desc: 'Light, pillowy Ghanaian fried doughnuts dusted in sugar — dangerously addictive.',                  image: '/images/bofrot.jpg',           category: 'Sweets',      popular: true  },
-];
-
 const PARTY_PERKS = [
-  'Feeds 20 to 200+ guests', 'Customisable menu selection',
+  'Feeds 20 to 300+ guests', 'Customisable menu selection',
   'Fresh prepared on the day', 'Setup & serving available',
   'Flexible pickup or delivery', 'Corporate & private events',
 ];
 
 const fadeUp = (delay = 0) => ({
-  initial:     { opacity: 0, y: 30 },
+  initial: { opacity: 0, y: 30 },
   whileInView: { opacity: 1, y: 0 },
-  viewport:    { once: true },
-  transition:  { duration: 0.55, delay, ease: [0.22, 1, 0.36, 1] },
+  viewport: { once: true },
+  transition: { duration: 0.55, delay, ease: [0.22, 1, 0.36, 1] },
 });
+
+const SizePicker = ({ item, onAdd }) => {
+  const [selectedIdx, setSelectedIdx] = useState(0);
+  const sizes = item.sizes;
+  const selected = sizes[selectedIdx];
+
+  return (
+    <div className="flex flex-col gap-2 mt-1">
+      {/* Dropdown */}
+      <select
+        value={selectedIdx}
+        onChange={e => setSelectedIdx(Number(e.target.value))}
+        className="w-full px-3 py-2 rounded-lg text-sm outline-none font-black"
+        style={{
+          background: '#fff7f0',
+          border: '2px solid rgba(192,57,43,0.2)',
+          color: '#1a0f0a',
+          fontFamily: 'inherit',
+        }}
+      >
+        {sizes.map((s, i) => (
+          <option key={i} value={i}>
+            {s.label} — {s.quantity}{s.unit} · ${Number(s.price).toFixed(2)}
+          </option>
+        ))}
+      </select>
+
+      {/* Add button */}
+      <button
+        onClick={() => onAdd({
+          ...item,
+          id:    `${item._id || item.id}-${selectedIdx}`,
+          name:  `${item.name} (${selected.label})`,
+          price: Number(selected.price),
+          size:  `${selected.quantity}${selected.unit}`,
+        })}
+        className="w-full py-2.5 rounded-lg text-white font-black text-xs tracking-widest uppercase transition-all hover:-translate-y-0.5"
+        style={{
+          background: 'linear-gradient(135deg,#c0392b,#e67e22)',
+          boxShadow: '0 3px 14px rgba(192,57,43,0.35)',
+        }}
+      >
+        + Add {selected.label} to Order
+      </button>
+    </div>
+  );
+};
 
 const Menu = () => {
   const navigate = useNavigate();
   const { cart, addToCart, removeFromCart, updateCartItem, total, itemCount } = useCart();
 
-  const [menuItems,      setMenuItems]      = useState(FALLBACK_MENU);
+  const [menuItems, setMenuItems] = useState([]);
+  const [loadingMenu, setLoadingMenu] = useState(true);
   const [activeCategory, setActiveCategory] = useState('All');
-  const [cartOpen,       setCartOpen]       = useState(false);
-  const [categories,     setCategories]     = useState(['All', 'Rice Dishes', 'Swallows', 'Proteins', 'Sides', 'Sweets']);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [categories, setCategories] = useState(['All', 'Rice Dishes', 'Swallows', 'Proteins', 'Sides', 'Sweets']);
 
   useEffect(() => {
+    setLoadingMenu(true);
     fetch(`${API_BASE}/api/menu?t=${Date.now()}`, { cache: 'no-store' })
       .then(r => r.json())
       .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
-          // FIXED: MongoDB returns _id, not id — normalize so cart works correctly
+        if (Array.isArray(data)) {
           const normalized = data.map(item => ({ ...item, id: item._id || item.id }));
           setMenuItems(normalized);
-
-          // Build category list dynamically from DB items
           const cats = ['All', ...new Set(normalized.map(i => i.category).filter(Boolean))];
           setCategories(cats);
         }
       })
-      .catch(() => {}); // silently keep fallback on network error
+      .catch(err => console.error('Menu fetch failed:', err))
+      .finally(() => setLoadingMenu(false));
   }, []);
 
   const partyRef = useRef(null);
@@ -131,65 +167,82 @@ const Menu = () => {
 
       {/* ── MENU GRID ── */}
       <section className="max-w-6xl mx-auto px-6 py-16">
-        <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <AnimatePresence mode="popLayout">
-            {filtered.map((item, i) => {
-              const inCart = cart.find(c => c.id === item.id);
-              return (
-                <motion.div key={item.id} layout
-                  initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.4, delay: i * 0.05 }}
-                  className="bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col hover:-translate-y-2 hover:shadow-xl transition-all duration-300 relative">
-                  {item.popular && (
-                    <span className="absolute top-3 right-3 z-10 text-white text-xs font-black tracking-wider uppercase px-3 py-1 rounded-full"
-                      style={{ background: 'linear-gradient(135deg,#c0392b,#e67e22)' }}>
-                      ⭐ Popular
-                    </span>
-                  )}
-                  <div className="overflow-hidden relative h-48">
-                    <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
-                    <div className="absolute bottom-0 inset-x-0 h-2/5"
-                      style={{ background: 'linear-gradient(to top,rgba(26,15,10,0.4),transparent)' }} />
-                  </div>
-                  <div className="p-4 flex flex-col gap-2 flex-1">
-                    <div className="flex justify-between items-start gap-2">
-                      <h3 className="font-corm text-xl font-bold leading-tight" style={{ color: '#1a0f0a' }}>{item.name}</h3>
-                      <span className="font-black text-lg whitespace-nowrap text-red-700">${item.price.toFixed(2)}</span>
-                    </div>
-                    <p className="text-stone-500 text-xs leading-relaxed flex-1">{item.desc}</p>
-                    <span className="self-start text-xs font-black tracking-widest uppercase px-3 py-1 rounded-full bg-amber-50 text-amber-700">
-                      {item.category}
-                    </span>
-                    {inCart ? (
-                      <div className="flex items-center gap-3 mt-1">
-                        <button onClick={() => updateQty(item.id, -1)}
-                          className="w-8 h-8 rounded-full flex items-center justify-center border-2 border-red-700 text-red-700 hover:bg-red-700 hover:text-white transition-all">
-                          <Minus size={13} />
-                        </button>
-                        <span className="font-black text-base min-w-[20px] text-center" style={{ color: '#1a0f0a' }}>
-                          {inCart.quantity}
-                        </span>
-                        <button onClick={() => updateQty(item.id, 1)}
-                          className="w-8 h-8 rounded-full flex items-center justify-center border-2 border-red-700 text-red-700 hover:bg-red-700 hover:text-white transition-all">
-                          <Plus size={13} />
-                        </button>
-                        <span className="ml-auto text-sm font-black text-red-700">
-                          ${(inCart.quantity * item.price).toFixed(2)}
-                        </span>
-                      </div>
-                    ) : (
-                      <button onClick={() => addToCart(item)}
-                        className="w-full py-2.5 rounded-lg text-white font-black text-xs tracking-widest uppercase mt-1 transition-all hover:-translate-y-0.5"
-                        style={{ background: 'linear-gradient(135deg,#c0392b,#e67e22)', boxShadow: '0 3px 14px rgba(192,57,43,0.35)' }}>
-                        + Add to Order
-                      </button>
+        {loadingMenu && (
+          <div className="flex items-center justify-center py-24">
+            <div className="w-10 h-10 border-2 border-stone-700 border-t-orange-500 rounded-full animate-spin" />
+          </div>
+        )}
+        {!loadingMenu && menuItems.length === 0 && (
+          <div className="text-center py-24 text-stone-500">No menu items found.</div>
+        )}
+        {!loadingMenu && menuItems.length > 0 && (
+          <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <AnimatePresence mode="popLayout">
+              {filtered.map((item, i) => {
+                const inCart = cart.find(c =>
+                  c.id === item.id ||
+                  c.id === item._id ||
+                  String(c.id).startsWith(`${item._id || item.id}-`)
+                );
+                return (
+                  <motion.div key={item.id} layout
+                    initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.4, delay: i * 0.05 }}
+                    className="bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col hover:-translate-y-2 hover:shadow-xl transition-all duration-300 relative">
+                    {item.popular && (
+                      <span className="absolute top-3 right-3 z-10 text-white text-xs font-black tracking-wider uppercase px-3 py-1 rounded-full"
+                        style={{ background: 'linear-gradient(135deg,#c0392b,#e67e22)' }}>
+                        ⭐ Popular
+                      </span>
                     )}
-                  </div>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-        </motion.div>
+                    <div className="overflow-hidden relative h-48">
+                      <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
+                      <div className="absolute bottom-0 inset-x-0 h-2/5"
+                        style={{ background: 'linear-gradient(to top,rgba(26,15,10,0.4),transparent)' }} />
+                    </div>
+                    <div className="p-4 flex flex-col gap-2 flex-1">
+                      <div className="flex justify-between items-start gap-2">
+                        <h3 className="font-corm text-xl font-bold leading-tight" style={{ color: '#1a0f0a' }}>{item.name}</h3>
+                        <span className="font-black text-lg whitespace-nowrap text-red-700">${item.price.toFixed(2)}</span>
+                      </div>
+                      <p className="text-stone-500 text-xs leading-relaxed flex-1">{item.desc}</p>
+                      <span className="self-start text-xs font-black tracking-widest uppercase px-3 py-1 rounded-full bg-amber-50 text-amber-700">
+                        {item.category}
+                      </span>
+                      {inCart ? (
+                        <div className="flex items-center gap-3 mt-1">
+                          <button onClick={() => updateQty(item.id, -1)}
+                            className="w-8 h-8 rounded-full flex items-center justify-center border-2 border-red-700 text-red-700 hover:bg-red-700 hover:text-white transition-all">
+                            <Minus size={13} />
+                          </button>
+                          <span className="font-black text-base min-w-[20px] text-center" style={{ color: '#1a0f0a' }}>
+                            {inCart.quantity}
+                          </span>
+                          <button onClick={() => updateQty(item.id, 1)}
+                            className="w-8 h-8 rounded-full flex items-center justify-center border-2 border-red-700 text-red-700 hover:bg-red-700 hover:text-white transition-all">
+                            <Plus size={13} />
+                          </button>
+                          <span className="ml-auto text-sm font-black text-red-700">
+                            ${(inCart.quantity * item.price).toFixed(2)}
+                          </span>
+                        </div>
+                     ) : item.sizes && item.sizes.length > 0 ? (
+  <div className="mt-1">
+    <SizePicker item={item} onAdd={addToCart} />
+  </div>
+) : (
+                        <button onClick={() => addToCart(item)}
+                          className="w-full py-2.5 rounded-lg text-white font-black text-xs tracking-widest uppercase mt-1 transition-all hover:-translate-y-0.5"
+                          style={{ background: 'linear-gradient(135deg,#c0392b,#e67e22)', boxShadow: '0 3px 14px rgba(192,57,43,0.35)' }}>
+                          + Add to Order
+                        </button>)}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </motion.div>
+        )}
       </section>
 
       {/* ── PARTY CATERING ── */}
@@ -247,9 +300,9 @@ const Menu = () => {
                 </div>
               </div>
               {[
-                { label: 'Small Gathering', sub: 'Up to 30 guests', price: 'From $250',    icon: Users },
-                { label: 'Medium Event',    sub: '30 – 80 guests',  price: 'From $600',    icon: Users },
-                { label: 'Large Event',     sub: '80+ guests',      price: 'Custom Quote', icon: Star  },
+                { label: 'Small Gathering', sub: 'Up to 30 guests', price: 'From $250', icon: Users },
+                { label: 'Medium Event', sub: '30 – 80 guests', price: 'From $600', icon: Users },
+                { label: 'Large Event', sub: '80+ guests', price: 'Custom Quote', icon: Star },
               ].map(({ label, sub, price, icon: Icon }) => (
                 <div key={label} className="flex items-center justify-between py-4"
                   style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
