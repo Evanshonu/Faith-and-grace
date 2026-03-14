@@ -672,7 +672,7 @@ const OrderCard = ({ order, onStatusChange, isPast }) => {
 };
 
 /* ─── MAIN DASHBOARD ─────────────────────────────────────────────────── */
-const API_ADMIN = 'https://faith-and-grace.onrender.com';
+const API_ADMIN = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const Dashboard = ({ onLogout }) => {
   const [tab, setTab] = useState('overview');

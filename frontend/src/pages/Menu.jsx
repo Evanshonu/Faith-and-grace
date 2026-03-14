@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 
-const API_BASE = 'https://faith-and-grace.onrender.com';
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const PARTY_PERKS = [
   'Feeds 20 to 300+ guests', 'Customisable menu selection',

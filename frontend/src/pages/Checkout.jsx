@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useCart } from "../context/CartContext";
 import { paymentAPI, orderAPI } from "../services/api";
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 const Checkout = () => {
 
   const { cart, total, clearCart } = useCart();

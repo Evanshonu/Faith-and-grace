@@ -145,9 +145,7 @@ OWNER:
 Phone: 862-212-9328
 Email: gnigriel@yahoo.com
 
-DEVELOPERS:
-evaanshonu@gmail.com
-blackbird77ad@gmail.com
+RESET-PASS=node -e "import('bcryptjs').then(b => b.default.hash('yournewpassword', 10).then(console.log))"
 
 ARCHITECTURE:
 
@@ -168,3 +166,9 @@ Order marked PAID in MongoDB
 Email sent to customer
       ↓
 Owner dashboard sees paid order
+
+
+DEVELOPERS:
+evaanshonu@gmail.com
+blackbird77ad@gmail.com
+

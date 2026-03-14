@@ -33,6 +33,8 @@ frontend/build/
 frontend/.env
 backend/.env
 **/.env
+.env.local
+
 
 # IDE
 .vscode/
