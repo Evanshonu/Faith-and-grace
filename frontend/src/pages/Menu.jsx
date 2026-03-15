@@ -52,10 +52,10 @@ const SizePicker = ({ item, onAdd }) => {
       <button
         onClick={() => onAdd({
           ...item,
-          id:    `${item._id || item.id}-${selectedIdx}`,
-          name:  `${item.name} (${selected.label})`,
+          id: `${item._id || item.id}-${selectedIdx}`,
+          name: `${item.name} (${selected.label})`,
           price: Number(selected.price),
-          size:  `${selected.quantity}${selected.unit}`,
+          size: `${selected.quantity}${selected.unit}`,
         })}
         className="w-full py-2.5 rounded-lg text-white font-black text-xs tracking-widest uppercase transition-all hover:-translate-y-0.5"
         style={{
@@ -195,8 +195,13 @@ const Menu = () => {
                         ⭐ Popular
                       </span>
                     )}
-                    <div className="overflow-hidden relative h-48">
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" />
+                    <div className="overflow-hidden relative h-48 bg-stone-900">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                        onError={e => { e.target.src = '/images/placeholder.jpg'; }}
+                      />
                       <div className="absolute bottom-0 inset-x-0 h-2/5"
                         style={{ background: 'linear-gradient(to top,rgba(26,15,10,0.4),transparent)' }} />
                     </div>
@@ -226,11 +231,11 @@ const Menu = () => {
                             ${(inCart.quantity * item.price).toFixed(2)}
                           </span>
                         </div>
-                     ) : item.sizes && item.sizes.length > 0 ? (
-  <div className="mt-1">
-    <SizePicker item={item} onAdd={addToCart} />
-  </div>
-) : (
+                      ) : item.sizes && item.sizes.length > 0 ? (
+                        <div className="mt-1">
+                          <SizePicker item={item} onAdd={addToCart} />
+                        </div>
+                      ) : (
                         <button onClick={() => addToCart(item)}
                           className="w-full py-2.5 rounded-lg text-white font-black text-xs tracking-widest uppercase mt-1 transition-all hover:-translate-y-0.5"
                           style={{ background: 'linear-gradient(135deg,#c0392b,#e67e22)', boxShadow: '0 3px 14px rgba(192,57,43,0.35)' }}>
@@ -296,13 +301,13 @@ const Menu = () => {
                 </div>
                 <div>
                   <div className="font-corm text-xl font-bold" style={{ color: '#fff8f0' }}>Party Packages</div>
-                  <div className="text-xs mt-0.5" style={{ color: 'rgba(253,248,242,0.5)' }}>Starting from $8/person</div>
+                  <div className="text-xs mt-0.5" style={{ color: 'rgba(253,248,242,0.5)' }}>Starting from $10/person</div>
                 </div>
               </div>
               {[
-                { label: 'Small Gathering', sub: 'Up to 30 guests', price: 'From $250', icon: Users },
-                { label: 'Medium Event', sub: '30 – 80 guests', price: 'From $600', icon: Users },
-                { label: 'Large Event', sub: '80+ guests', price: 'Custom Quote', icon: Star },
+                { label: 'Small Gathering', sub: 'Up to 30 guests', icon: Users },
+                { label: 'Medium Event', sub: '30 – 300 guests', icon: Users },
+                { label: 'Large Event', sub: '300+ guests', icon: Star },
               ].map(({ label, sub, price, icon: Icon }) => (
                 <div key={label} className="flex items-center justify-between py-4"
                   style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
@@ -374,7 +379,12 @@ const Menu = () => {
               <div className="flex-1 overflow-y-auto hide-scroll px-6 py-2">
                 {cart.map(item => (
                   <div key={item.id} className="flex gap-4 items-center py-4 border-b border-amber-50">
-                    <img src={item.image} alt={item.name} className="w-14 h-14 rounded-xl object-cover shrink-0" />
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-14 h-14 rounded-xl object-cover shrink-0 bg-stone-900"
+                      onError={e => { e.target.src = '/images/placeholder.jpg'; }}
+                    />
                     <div className="flex-1 min-w-0">
                       <div className="font-black text-sm" style={{ color: '#1a0f0a' }}>{item.name}</div>
                       <div className="text-xs text-red-700 font-black mt-0.5">${item.price.toFixed(2)} each</div>

@@ -42,7 +42,7 @@ const STATUS_CONFIG = {
 
 const NEXT_STATUS = { pending: 'preparing', preparing: 'ready', ready: 'delivered' };
 
-const EMPTY_FORM = { name: '', price: '', category: 'Rice Dishes', desc: '', image: '', available: true, sizes: [] };
+const EMPTY_FORM = { name: '', price: '', category: 'Rice Dishes', desc: '', image: '', available: true, sizes: [], imgFit: 'cover', imgPosition: 'center' };
 
 const TABS = [
   { key: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -59,6 +59,130 @@ const inputStyle = {
 
 const focusRed = e => { e.target.style.borderColor = '#c0392b'; };
 const blurReset = e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; };
+
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
+/* ─── FORGOT PASSWORD ────────────────────────────────────────────────── */
+const ForgotPassword = () => {
+  const [step, setStep] = useState('idle');
+  const [token, setToken] = useState('');
+  const [newPw, setNewPw] = useState('');
+  const [show, setShow] = useState(false);
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get('reset');
+    if (t) { setToken(t); setStep('resetting'); }
+  }, []);
+
+  const requestReset = async () => {
+    setStep('sending');
+    try {
+      const res = await fetch(`${API_ADMIN}/api/auth/request-reset`, { method: 'POST' });
+      const data = await res.json();
+      setMessage(data.message || 'Check owner email for reset link');
+      setStep('sent');
+    } catch {
+      setMessage('Failed to send reset email. Is the server running?');
+      setStep('error');
+    }
+  };
+
+  const confirmReset = async () => {
+    if (!newPw || newPw.length < 6) return;
+    setStep('sending');
+    try {
+      const res = await fetch(`${API_ADMIN}/api/auth/confirm-reset`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, newPassword: newPw }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setMessage(data.error); setStep('error'); return; }
+      setMessage('Password updated! You can now log in.');
+      setStep('done');
+      window.history.replaceState({}, '', '/owner');
+    } catch {
+      setMessage('Reset failed. Try again.');
+      setStep('error');
+    }
+  };
+
+  const iSty = {
+    background: 'rgba(255,255,255,0.07)',
+    border: '2px solid rgba(255,255,255,0.1)',
+    fontFamily: 'inherit',
+  };
+
+  if (step === 'resetting') return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+      className="rounded-2xl p-6 mt-4"
+      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+    >
+      <p className="text-xs font-black tracking-widest uppercase text-stone-500 mb-4 text-center">
+        Set New Password
+      </p>
+      <div className="relative mb-3">
+        <input
+          type={show ? 'text' : 'password'}
+          value={newPw}
+          onChange={e => setNewPw(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && confirmReset()}
+          placeholder="New password (min 6 chars)"
+          className="w-full px-4 py-3 rounded-xl text-white text-sm outline-none pr-12 transition-all"
+          style={iSty}
+        />
+        <button
+          onClick={() => setShow(s => !s)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 hover:text-stone-300"
+        >
+          {show ? <EyeOff size={16} /> : <Eye size={16} />}
+        </button>
+      </div>
+      <button
+        onClick={confirmReset}
+        disabled={newPw.length < 6}
+        className="w-full py-3 rounded-xl font-black text-sm tracking-widest uppercase text-white transition-all disabled:opacity-40"
+        style={{ background: 'linear-gradient(135deg,#c0392b,#e67e22)' }}
+      >
+        Set New Password
+      </button>
+      {message && <p className="text-center text-xs mt-3 text-red-400">{message}</p>}
+    </motion.div>
+  );
+
+  if (step === 'sending') return (
+    <p className="text-center text-stone-500 text-xs mt-4">Sending...</p>
+  );
+
+  if (step === 'sent') return (
+    <p className="text-center text-green-400 text-xs mt-4">{message}</p>
+  );
+
+  if (step === 'done') return (
+    <p className="text-center text-green-400 text-xs mt-4">{message}</p>
+  );
+
+  if (step === 'error') return (
+    <div className="text-center mt-4">
+      <p className="text-red-400 text-xs mb-2">{message}</p>
+      <button onClick={() => setStep('idle')} className="text-xs text-stone-500 hover:text-stone-300 underline">
+        Try again
+      </button>
+    </div>
+  );
+
+  return (
+    <p className="text-center mt-4">
+      <button onClick={requestReset} className="text-xs text-stone-600 hover:text-orange-400 transition-colors underline">
+        Forgot password?
+      </button>
+    </p>
+  );
+};
 
 /* ─── LOGIN PAGE ─────────────────────────────────────────────────────── */
 const LoginPage = ({ onLogin }) => {
@@ -159,6 +283,8 @@ const LoginPage = ({ onLogin }) => {
             {loading ? 'Verifying...' : 'Sign In'}
           </button>
         </div>
+
+        <ForgotPassword />
 
         <p className="text-center text-stone-600 text-xs mt-6">
           This page is restricted to the restaurant owner only.
@@ -342,13 +468,43 @@ const MenuFormModal = ({ item, categories: initCategories, onSave, onClose }) =>
             )}
 
             {/* Preview */}
+            {/* Preview */}
             {preview ? (
-              <div className="mt-3 relative w-full h-36 rounded-xl overflow-hidden">
-                <img src={preview} alt="preview" className="w-full h-full object-cover" onError={() => setPreview('')} />
+              <div className="mt-3 flex flex-col gap-2">
+                <div className="relative w-full h-36 rounded-xl overflow-hidden bg-stone-900">
+                  <img
+                    src={preview}
+                    alt="preview"
+                    style={{ objectFit: form.imgFit || 'cover', objectPosition: form.imgPosition || 'center' }}
+                    className="w-full h-full transition-all"
+                    onError={() => setPreview('')}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  {[['cover', 'Crop Fill'], ['contain', 'Fit In'], ['scale-down', 'Scale Down']].map(([val, label]) => (
+                    <button key={val} type="button" onClick={() => set('imgFit', val)}
+                      className="flex-1 py-1.5 rounded-lg text-xs font-black uppercase tracking-wide transition-all"
+                      style={form.imgFit === val || (!form.imgFit && val === 'cover')
+                        ? { background: 'linear-gradient(135deg,#c0392b,#e67e22)', color: '#fff' }
+                        : { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#777' }}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  {[['top', 'Top'], ['center', 'Center'], ['bottom', 'Bottom']].map(([val, label]) => (
+                    <button key={val} type="button" onClick={() => set('imgPosition', val)}
+                      className="flex-1 py-1.5 rounded-lg text-xs font-black uppercase tracking-wide transition-all"
+                      style={form.imgPosition === val || (!form.imgPosition && val === 'center')
+                        ? { background: 'rgba(255,154,60,0.2)', border: '1px solid rgba(255,154,60,0.4)', color: '#ff9a3c' }
+                        : { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#777' }}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
                 <button type="button" onClick={() => { setPreview(''); set('image', ''); }}
-                  className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center"
-                  style={{ background: 'rgba(0,0,0,0.7)' }}>
-                  <X size={14} className="text-white" />
+                  className="text-xs text-stone-600 hover:text-red-400 transition-colors text-center">
+                  Remove image
                 </button>
               </div>
             ) : (
@@ -979,8 +1135,14 @@ const Dashboard = ({ onLogout }) => {
                       className="rounded-2xl overflow-hidden"
                       style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
                     >
-                      <div className="relative h-40 overflow-hidden">
-                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      <div className="relative h-44 overflow-hidden bg-stone-900">
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          style={{ objectFit: item.imgFit || 'cover', objectPosition: item.imgPosition || 'center' }}
+                          className="w-full h-full transition-transform duration-500 hover:scale-105"
+                          onError={e => { e.target.src = '/images/placeholder.jpg'; }}
+                        />
                         <div className="absolute inset-0" style={{ background: 'linear-gradient(to top,rgba(13,8,5,0.8),transparent 60%)' }} />
                         {!item.available && (
                           <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.55)' }}>
