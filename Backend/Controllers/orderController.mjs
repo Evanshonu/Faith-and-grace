@@ -7,7 +7,10 @@ const VALID_STATUSES = ['paid', 'preparing', 'ready', 'delivered'];
 const OWNER_WHATSAPP = process.env.OWNER_PHONE || '233544930267';
 
 const makeTransporter = () => nodemailer.createTransport({
-  service: 'gmail',
+  host:   'smtp.gmail.com',
+  port:   465,
+  secure: true,
+  family: 4, // force IPv4
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
