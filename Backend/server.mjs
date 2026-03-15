@@ -28,7 +28,7 @@ const ALLOWED_ORIGINS = [
 // Render/API URL : https://faith-and-grace.onrender.com
 
 // Webhook requires raw body before JSON middleware
-app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
+app.use('/webhook/stripe', express.raw({ type: 'application/json' }));
 
 app.use(cors({ origin: ALLOWED_ORIGINS, credentials: true }));
 app.use(express.json({ limit: '10mb' }));

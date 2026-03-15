@@ -15,6 +15,8 @@ const menuItemSchema = new mongoose.Schema({
   desc:      { type: String, required: true, trim: true },
   image:     { type: String, default: '' },
   available: { type: Boolean, default: true },
+  imgFit:      { type: String, default: 'cover' },
+  imgPosition: { type: String, default: 'center' },
 }, { timestamps: true });
 
 const MenuItem = mongoose.model('MenuItem', menuItemSchema);
