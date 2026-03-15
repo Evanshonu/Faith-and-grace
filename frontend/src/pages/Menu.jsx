@@ -23,47 +23,79 @@ const fadeUp = (delay = 0) => ({
 });
 
 const SizePicker = ({ item, onAdd }) => {
-  const [selectedIdx, setSelectedIdx] = useState(0);
   const sizes = item.sizes;
-  const selected = sizes[selectedIdx];
+  // Track quantity per size index
+  const [quantities, setQuantities] = useState(
+    sizes.reduce((acc, _, i) => ({ ...acc, [i]: 0 }), {})
+  );
+
+  const updateQty = (i, delta) => {
+    setQuantities(q => ({
+      ...q,
+      [i]: Math.max(0, (q[i] || 0) + delta),
+    }));
+  };
+
+  const totalSelected = Object.values(quantities).reduce((s, v) => s + v, 0);
+
+  const handleAddAll = () => {
+    sizes.forEach((s, i) => {
+      const qty = quantities[i] || 0;
+      if (qty > 0) {
+        for (let n = 0; n < qty; n++) {
+          onAdd({
+            ...item,
+            id:    `${item._id || item.id}-${i}`,
+            name:  `${item.name} (${s.label})`,
+            price: Number(s.price),
+            size:  `${s.quantity}${s.unit}`,
+          });
+        }
+      }
+    });
+    // Reset quantities after adding
+    setQuantities(sizes.reduce((acc, _, i) => ({ ...acc, [i]: 0 }), {}));
+  };
 
   return (
     <div className="flex flex-col gap-2 mt-1">
-      {/* Dropdown */}
-      <select
-        value={selectedIdx}
-        onChange={e => setSelectedIdx(Number(e.target.value))}
-        className="w-full px-3 py-2 rounded-lg text-sm outline-none font-black"
-        style={{
-          background: '#fff7f0',
-          border: '2px solid rgba(192,57,43,0.2)',
-          color: '#1a0f0a',
-          fontFamily: 'inherit',
-        }}
-      >
-        {sizes.map((s, i) => (
-          <option key={i} value={i}>
-            {s.label} — {s.quantity}{s.unit} · ${Number(s.price).toFixed(2)}
-          </option>
-        ))}
-      </select>
+      {sizes.map((s, i) => (
+        <div key={i} className="flex items-center justify-between px-3 py-2 rounded-lg"
+          style={{ background: 'rgba(192,57,43,0.06)', border: '1px solid rgba(192,57,43,0.15)' }}>
+          <div className="flex flex-col">
+            <span className="text-xs font-black text-stone-800">{s.label}</span>
+            <span className="text-xs text-stone-500">{s.quantity}{s.unit} · <span className="text-red-700 font-black">${Number(s.price).toFixed(2)}</span></span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => updateQty(i, -1)}
+              className="w-7 h-7 rounded-full border-2 border-red-700 text-red-700 flex items-center justify-center hover:bg-red-700 hover:text-white transition-all"
+            >
+              <Minus size={11} />
+            </button>
+            <span className="font-black text-sm min-w-[16px] text-center" style={{ color: '#1a0f0a' }}>
+              {quantities[i] || 0}
+            </span>
+            <button
+              onClick={() => updateQty(i, 1)}
+              className="w-7 h-7 rounded-full border-2 border-red-700 text-red-700 flex items-center justify-center hover:bg-red-700 hover:text-white transition-all"
+            >
+              <Plus size={11} />
+            </button>
+          </div>
+        </div>
+      ))}
 
-      {/* Add button */}
       <button
-        onClick={() => onAdd({
-          ...item,
-          id: `${item._id || item.id}-${selectedIdx}`,
-          name: `${item.name} (${selected.label})`,
-          price: Number(selected.price),
-          size: `${selected.quantity}${selected.unit}`,
-        })}
-        className="w-full py-2.5 rounded-lg text-white font-black text-xs tracking-widest uppercase transition-all hover:-translate-y-0.5"
+        onClick={handleAddAll}
+        disabled={totalSelected === 0}
+        className="w-full py-2.5 rounded-lg text-white font-black text-xs tracking-widest uppercase transition-all hover:-translate-y-0.5 disabled:opacity-40 disabled:cursor-not-allowed"
         style={{
-          background: 'linear-gradient(135deg,#c0392b,#e67e22)',
-          boxShadow: '0 3px 14px rgba(192,57,43,0.35)',
+          background: totalSelected > 0 ? 'linear-gradient(135deg,#c0392b,#e67e22)' : '#ccc',
+          boxShadow:  totalSelected > 0 ? '0 3px 14px rgba(192,57,43,0.35)' : 'none',
         }}
       >
-        + Add {selected.label} to Order
+        {totalSelected > 0 ? `+ Add ${totalSelected} to Order` : 'Select sizes above'}
       </button>
     </div>
   );

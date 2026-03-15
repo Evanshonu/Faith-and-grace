@@ -344,6 +344,14 @@ const MenuFormModal = ({ item, categories: initCategories, onSave, onClose }) =>
   const handleFileChange = e => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Restrict to 200KB
+    if (file.size > 200 * 1024) {
+      alert(`Image is too large (${(file.size / 1024).toFixed(0)}KB). Please use a URL instead — upload your image to Google Drive or Imgur and paste the link in the URL tab.`);
+      e.target.value = '';
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = ev => {
       const dataUrl = ev.target.result;
@@ -447,8 +455,13 @@ const MenuFormModal = ({ item, categories: initCategories, onSave, onClose }) =>
                 <button type="button" onClick={() => fileRef.current?.click()}
                   className="w-full py-3 rounded-xl text-sm font-black text-stone-300 transition-all hover:text-white flex items-center justify-center gap-2"
                   style={{ border: '2px dashed rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.03)' }}>
-                  <ImagePlus size={18} /> Click to select from device
+                  <ImagePlus size={18} /> Click to select (max 200KB)
                 </button>
+                {preview && imgSource === 'file' && (
+                  <p className="text-xs text-stone-500 mt-1 text-center">
+                    For larger images use the URL tab — upload to Google Drive or <a href="https://imgur.com" target="_blank" rel="noopener noreferrer" className="text-orange-400 underline">Imgur</a> and paste the link.
+                  </p>
+                )}
                 {preview && imgSource === 'file' && (
                   <p className="text-xs text-stone-500 mt-2 text-center">File loaded ✓</p>
                 )}
@@ -1023,7 +1036,7 @@ const Dashboard = ({ onLogout }) => {
               {{ overview: 'Dashboard Overview', menu: 'Menu Management', orders: 'Active Orders', past: 'Past Orders' }[tab]}
             </h1>
             <p className="text-xs text-stone-500 mt-0.5">
-              {tab === 'overview' && 'Your restaurant at a glance'}
+              {tab === 'overview' && 'Faith and Grace at a glance'}
               {tab === 'menu' && `${menu.length} dishes · ${menu.filter(i => i.available).length} available`}
               {tab === 'orders' && `${activeOrders.length} order${activeOrders.length !== 1 ? 's' : ''} need attention`}
               {tab === 'past' && `${pastOrders.length} completed orders · $${totalRevenue.toFixed(2)} earned`}

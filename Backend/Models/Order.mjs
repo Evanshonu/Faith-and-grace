@@ -20,11 +20,10 @@ const orderSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Auto-generate orderId
-orderSchema.pre('save', async function (next) {
-  if (!this.isNew) return next();
+orderSchema.pre('save', async function () {
+  if (!this.isNew) return;
   const count = await mongoose.model('Order').countDocuments();
   this.orderId = `ORD-${String(count + 1).padStart(3, '0')}`;
-  next();
 });
 
 orderSchema.add({ orderId: { type: String } });
