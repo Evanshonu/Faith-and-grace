@@ -1,36 +1,12 @@
+import 'dotenv/config';
 import Order      from '../Models/Order.mjs';
 import nodemailer from 'nodemailer';
 
 const VALID_STATUSES = ['paid', 'preparing', 'ready', 'delivered'];
 
-/* ─── WhatsApp Message Generator ──────────────────────────────────────────────────────────── */
+const OWNER_WHATSAPP = process.env.OWNER_PHONE || '233544930267';
 
-const OWNER_WHATSAPP = "233501657205";
-
-const buildWhatsAppMessage = (order) => {
-
-  const itemsList = order.items
-    .map(i => `• ${i.name} x${i.qty}`)
-    .join('\n');
-
-  const message = `
-NEW ORDER RECEIVED
-
-Order ID: ${order.orderId}
-Customer: ${order.customer}
-Phone: ${order.phone}
-
-Items:
-${itemsList}
-
-Total: $${order.total.toFixed(2)}
-`;
-
-  return `https://wa.me/${OWNER_WHATSAPP}?text=${encodeURIComponent(message)}`;
-};
-
-/* ─── EMAIL ──────────────────────────────────────────────────────────── */
-const transporter = nodemailer.createTransport({
+const makeTransporter = () => nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: process.env.EMAIL_USER,
@@ -38,8 +14,24 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+const buildWhatsAppMessage = (order) => {
+  const itemsList = (order.items || [])
+    .map(i => `• ${i.name} x${i.qty}`)
+    .join('\n');
+  const message =
+    `NEW ORDER RECEIVED\n\n` +
+    `Order ID: ${order.orderId}\n` +
+    `Customer: ${order.customer}\n` +
+    `Phone: ${order.phone}\n\n` +
+    `Items:\n${itemsList}\n\n` +
+    `Total: $${order.total.toFixed(2)}`;
+  return `https://wa.me/${OWNER_WHATSAPP}?text=${encodeURIComponent(message)}`;
+};
+
 export const sendOrderNotifications = async (order) => {
-  const itemsList = order.items
+  const transporter = makeTransporter();
+
+  const itemsList = (order.items || [])
     .map(i => `  • ${i.name} x${i.qty}  — $${(i.price * i.qty).toFixed(2)}`)
     .join('\n');
 
@@ -74,7 +66,7 @@ export const sendOrderNotifications = async (order) => {
         </div>
         <div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:16px;margin:16px 0;">
           <p style="margin:0 0 12px;font-size:12px;text-transform:uppercase;letter-spacing:0.1em;color:#6b5040;">Your Order</p>
-          ${order.items.map(i => `
+          ${(order.items || []).map(i => `
             <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
               <span style="color:#c8a88a;">${i.name} x${i.qty}</span>
               <span style="color:#fff;font-weight:bold;">$${(i.price * i.qty).toFixed(2)}</span>
@@ -86,18 +78,12 @@ export const sendOrderNotifications = async (order) => {
           </div>
         </div>
         <p style="color:#a89080;font-size:14px;">Method: ${order.method === 'pickup' ? 'Pickup' : 'Delivery to ' + order.address}</p>
-        <p style="color:#a89080;font-size:14px;">Questions? Call us: <a href="tel:862-212-9328" style="color:#ff9a3c;">862-212-9328</a></p>
+        <p style="color:#a89080;font-size:14px;">Questions? Call us: <a href="tel:+233544930267" style="color:#ff9a3c;">+233 54 493 0267</a></p>
       </div>
     </div>
   `;
 
-  try {
-   await transporter.sendMail({
-  from:    `"Faith & Grace Orders" <${process.env.EMAIL_USER}>`,
-  to:      process.env.OWNER_EMAIL || 'blackbird77ad@gmail.com',
-  subject: `New Order ${order.orderId} — ${order.customer} ($${order.total.toFixed(2)})`,
-  text:    ownerText,
-  html: `
+  const ownerHtml = `
     <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;background:#1a0f0a;color:#f5ede3;border-radius:16px;overflow:hidden;">
       <div style="background:linear-gradient(135deg,#c0392b,#e67e22);padding:24px;text-align:center;">
         <h1 style="margin:0;font-size:22px;color:#fff;">New Order Received!</h1>
@@ -113,21 +99,30 @@ export const sendOrderNotifications = async (order) => {
         </table>
         <div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:16px;margin-bottom:20px;">
           <p style="margin:0 0 10px;font-size:12px;text-transform:uppercase;letter-spacing:0.1em;color:#6b5040;">Items Ordered</p>
-          ${order.items.map(i => `
+          ${(order.items || []).map(i => `
             <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
               <span style="color:#c8a88a;">${i.name} x${i.qty}</span>
               <span style="color:#fff;font-weight:bold;">$${(i.price * i.qty).toFixed(2)}</span>
             </div>
           `).join('')}
         </div>
-        <a href="https://www.graceefaith.com/owner" 
+        <a href="https://www.graceefaith.com/owner"
            style="display:block;text-align:center;padding:14px;background:linear-gradient(135deg,#c0392b,#e67e22);color:#fff;text-decoration:none;border-radius:10px;font-weight:bold;font-size:14px;letter-spacing:0.05em;">
           View &amp; Manage Order →
         </a>
       </div>
     </div>
-  `,
-});
+  `;
+
+  try {
+    await transporter.sendMail({
+      from:    `"Faith & Grace Orders" <${process.env.EMAIL_USER}>`,
+      to:      process.env.OWNER_EMAIL,
+      subject: `New Order ${order.orderId} — ${order.customer} ($${order.total.toFixed(2)})`,
+      text:    ownerText,
+      html:    ownerHtml,
+    });
+    console.log('✅ Owner email sent');
 
     if (order.email) {
       await transporter.sendMail({
@@ -136,6 +131,7 @@ export const sendOrderNotifications = async (order) => {
         subject: `Order Confirmed — ${order.orderId} | Faith & Grace`,
         html:    customerHtml,
       });
+      console.log('✅ Customer email sent');
     }
   } catch (err) {
     console.error('Email notification failed:', err.message);
@@ -143,76 +139,88 @@ export const sendOrderNotifications = async (order) => {
 };
 
 /* ─── CONTROLLERS ────────────────────────────────────────────────────── */
-const getOrders = async (req, res) => {
-  const orders = await Order.find().sort({ createdAt: -1 });
-  res.json(orders);
-};
-
-const createNewOrder = async (req, res) => {
-  const {
-    customer_name, customer_phone, customer_email,
-    items, total, method, address, payment_intent_id,
-  } = req.body;
-
-  // Prevent duplicate orders if payment already exists
-  if (payment_intent_id) {
-    const existing = await Order.findOne({ paymentId: payment_intent_id });
-    if (existing) return res.status(200).json(existing);
+export const getOrders = async (req, res) => {
+  try {
+    const orders = await Order.find().sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
+};
 
- const order = await Order.create({
-    customer:            customer_name,
-    phone:               customer_phone,
-    email:               customer_email    || '',
-    items,
-    total,
-    method,
-    address:             address           || '',
-    paymentId:           payment_intent_id || null,
-    stripePaymentIntent: payment_intent_id || 'manual',
-    status:              payment_intent_id ? 'paid' : 'pending',
-  });
-  // ------------------- SOCKET.IO EMIT -------------------
-  const io = req.app.get("io");
-  if (io) {
-    io.emit("new-order", order); // send to all connected kitchen screens
+export const createNewOrder = async (req, res) => {
+  try {
+    const {
+      customer_name, customer_phone, customer_email,
+      items, total, method, address, payment_intent_id,
+    } = req.body;
+
+    if (!customer_name || !customer_phone || !items || !total || !method) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Prevent duplicate orders
+    if (payment_intent_id) {
+      const existing = await Order.findOne({ paymentId: payment_intent_id });
+      if (existing) return res.status(200).json(existing);
+    }
+
+    const order = await Order.create({
+      customer:            customer_name,
+      phone:               customer_phone,
+      email:               customer_email    || '',
+      items,
+      total,
+      method,
+      address:             address           || '',
+      paymentId:           payment_intent_id || null,
+      stripePaymentIntent: payment_intent_id || 'manual',
+      status:              'paid',
+    });
+
+    // Emit to kitchen display
+    const io = req.app.get('io');
+    if (io) io.emit('new-order', order);
+
+    // Send notifications async — don't block response
+    sendOrderNotifications(order).catch(console.error);
+
+    const whatsappURL = buildWhatsAppMessage(order);
+    res.status(201).json({ ...order.toObject(), whatsappURL });
+
+  } catch (err) {
+    console.error('Create order failed:', err.message);
+    res.status(500).json({ error: err.message });
   }
-
-  // Send email notifications
-  sendOrderNotifications(order);
-
-  const whatsappURL = buildWhatsAppMessage(order);
-
-res.status(201).json({
-  ...order.toObject(),
-  whatsappURL
-});
 };
 
+export const updateOrderStatus = async (req, res) => {
+  try {
+    const { id }     = req.params;
+    const { status } = req.body;
 
-const updateOrderStatus = async (req, res) => {
-  const { id }     = req.params;
-  const { status } = req.body;
+    if (!VALID_STATUSES.includes(status))
+      return res.status(400).json({ error: `Status must be one of: ${VALID_STATUSES.join(', ')}` });
 
-  if (!VALID_STATUSES.includes(status))
-    return res.status(400).json({ error: `Status must be one of: ${VALID_STATUSES.join(', ')}` });
+    const updated = await Order.findByIdAndUpdate(
+      id, { status }, { new: true }
+    );
 
-  const updated = await Order.findByIdAndUpdate(
-    id, { status }, { new: true }
-  );
+    if (!updated)
+      return res.status(404).json({ error: 'Order not found' });
 
-  if (!updated)
-    return res.status(404).json({ error: 'Order not found' });
-
-  res.json(updated);
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
-
-
-const getOrderByPayment = async (req, res) => {
-  const order = await Order.findOne({ paymentId: req.params.paymentIntentId });
-  if (!order) return res.status(404).json({ error: 'Order not found' });
-  res.json(order);
+export const getOrderByPayment = async (req, res) => {
+  try {
+    const order = await Order.findOne({ paymentId: req.params.paymentIntentId });
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    res.json(order);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
-
-export { getOrders, createNewOrder, updateOrderStatus, getOrderByPayment };

@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 import { CartProvider } from './context/CartContext';
 import Navigation from './components/Navigation';
 import Footer from './components/Footer';
@@ -12,6 +13,10 @@ const Layout = () => {
   const location     = useLocation();
   const isAdminRoute = location.pathname === '/owner';
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   return (
     <div className="min-h-screen flex flex-col">
       {!isAdminRoute && <Navigation />}
@@ -20,7 +25,6 @@ const Layout = () => {
           <Route path="/"                   element={<Home />}              />
           <Route path="/menu"               element={<Menu />}              />
           <Route path="/checkout"           element={<Checkout />}          />
-          {/* FIXED: was /order-confirmation/:orderNumber — Stripe returns query params not a path param */}
           <Route path="/order-confirmation" element={<OrderConfirmation />} />
           <Route path="/owner"              element={<Admin />}             />
         </Routes>
