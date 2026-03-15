@@ -168,8 +168,18 @@ const Menu = () => {
       {/* ── MENU GRID ── */}
       <section className="max-w-6xl mx-auto px-6 py-16">
         {loadingMenu && (
-          <div className="flex items-center justify-center py-24">
-            <div className="w-10 h-10 border-2 border-stone-700 border-t-orange-500 rounded-full animate-spin" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="bg-white rounded-2xl overflow-hidden animate-pulse">
+                <div className="h-48 bg-stone-200" />
+                <div className="p-4 flex flex-col gap-3">
+                  <div className="h-4 bg-stone-200 rounded w-3/4" />
+                  <div className="h-3 bg-stone-100 rounded w-full" />
+                  <div className="h-3 bg-stone-100 rounded w-2/3" />
+                  <div className="h-8 bg-stone-200 rounded-lg mt-2" />
+                </div>
+              </div>
+            ))}
           </div>
         )}
         {!loadingMenu && menuItems.length === 0 && (

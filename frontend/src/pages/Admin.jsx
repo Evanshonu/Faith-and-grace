@@ -34,13 +34,14 @@ const INITIAL_ORDERS = [
 const CATEGORIES = ['Rice Dishes', 'Swallows', 'Proteins', 'Sides', 'Sweets'];
 
 const STATUS_CONFIG = {
+  paid: { label: 'Order Received', color: 'bg-purple-100 text-purple-700 border-purple-200', dot: 'bg-purple-500', icon: CheckCircle },
   pending: { label: 'Pending', color: 'bg-yellow-100 text-yellow-700 border-yellow-200', dot: 'bg-yellow-500', icon: Clock },
   preparing: { label: 'Preparing', color: 'bg-blue-100 text-blue-700 border-blue-200', dot: 'bg-blue-500', icon: Package },
   ready: { label: 'Ready', color: 'bg-green-100 text-green-700 border-green-200', dot: 'bg-green-500', icon: CheckCircle },
   delivered: { label: 'Delivered', color: 'bg-stone-100 text-stone-500 border-stone-200', dot: 'bg-stone-400', icon: Truck },
 };
 
-const NEXT_STATUS = { pending: 'preparing', preparing: 'ready', ready: 'delivered' };
+const NEXT_STATUS = { paid: 'preparing', pending: 'preparing', preparing: 'ready', ready: 'delivered' };
 
 const EMPTY_FORM = { name: '', price: '', category: 'Rice Dishes', desc: '', image: '', available: true, sizes: [], imgFit: 'cover', imgPosition: 'center' };
 
@@ -722,7 +723,7 @@ const DeleteConfirm = ({ item, onConfirm, onClose }) => (
 /* ─── ORDER CARD ─────────────────────────────────────────────────────── */
 const OrderCard = ({ order, onStatusChange, isPast }) => {
   const [expanded, setExpanded] = useState(false);
-  const cfg = STATUS_CONFIG[order.status];
+  const cfg = STATUS_CONFIG[order.status] || STATUS_CONFIG['pending'];
   const nextStatus = NEXT_STATUS[order.status];
   const orderId = order._id || order.id;
   const isReady = order.status === 'ready';
@@ -833,6 +834,7 @@ const API_ADMIN = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const Dashboard = ({ onLogout }) => {
   const [tab, setTab] = useState('overview');
   const [menu, setMenu] = useState([]);
+  const [loadingMenu, setLoadingMenu] = useState(true);
   const [orders, setOrders] = useState([]);
   const [editItem, setEditItem] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -846,11 +848,13 @@ const Dashboard = ({ onLogout }) => {
 
   useEffect(() => {
     const loadMenu = async () => {
+      setLoadingMenu(true);
       try {
         const res = await fetch(`${API_ADMIN}/api/menu?t=${Date.now()}`, { cache: 'no-store' });
         const data = await res.json();
         setMenu(Array.isArray(data) ? data : []);
       } catch (err) { console.error('Menu load failed:', err); }
+      finally { setLoadingMenu(false); }
     };
 
     const loadOrders = async () => {
@@ -1124,93 +1128,107 @@ const Dashboard = ({ onLogout }) => {
               </div>
 
               {/* Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                <AnimatePresence mode="popLayout">
-                  {filteredMenu.map(item => (
-                    <motion.div
-                      key={item._id || item.id} layout
-                      initial={{ opacity: 0, scale: 0.97 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      className="rounded-2xl overflow-hidden"
-                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
-                    >
-                      <div className="relative h-44 overflow-hidden bg-stone-900">
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          style={{ objectFit: item.imgFit || 'cover', objectPosition: item.imgPosition || 'center' }}
-                          className="w-full h-full transition-transform duration-500 hover:scale-105"
-                          onError={e => { e.target.src = '/images/placeholder.jpg'; }}
-                        />
-                        <div className="absolute inset-0" style={{ background: 'linear-gradient(to top,rgba(13,8,5,0.8),transparent 60%)' }} />
-                        {!item.available && (
-                          <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.55)' }}>
-                            <span className="text-white text-xs font-black tracking-widest uppercase px-4 py-2 rounded-full"
-                              style={{ background: 'rgba(239,68,68,0.8)', border: '1px solid rgba(239,68,68,0.5)' }}>
-                              Unavailable
-                            </span>
-                          </div>
-                        )}
-                        <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
-                          <div>
-                            <div className="font-corm text-xl font-bold text-white leading-tight">{item.name}</div>
-                            <div className="text-xs text-stone-400">{item.category}</div>
-                          </div>
-                          <div className="font-black text-xl" style={{ color: '#ff9a3c' }}>${item.price.toFixed(2)}</div>
-                        </div>
+              {/* Grid */}
+              {loadingMenu ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="rounded-2xl overflow-hidden animate-pulse"
+                      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                      <div className="h-44 bg-stone-800" />
+                      <div className="p-4 flex flex-col gap-3">
+                        <div className="h-3 bg-stone-700 rounded w-3/4" />
+                        <div className="h-3 bg-stone-800 rounded w-full" />
+                        <div className="h-8 bg-stone-700 rounded-lg mt-1" />
                       </div>
-                      <div className="p-4">
-                        <p className="text-stone-500 text-xs leading-relaxed mb-2 line-clamp-2">{item.desc}</p>
-                        {item.sizes && item.sizes.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mb-3">
-                            {item.sizes.map((s, i) => (
-                              <span key={i} className="text-xs px-2 py-0.5 rounded-full font-black"
-                                style={{ background: 'rgba(255,154,60,0.1)', color: '#ff9a3c', border: '1px solid rgba(255,154,60,0.2)' }}>
-                                {s.label} {s.quantity}{s.unit} · ${Number(s.price).toFixed(2)}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                        <div className="flex gap-2">
-                          {/* Toggle availability */}
-                          <button
-                            onClick={async () => {
-                              const updated = { ...item, available: !item.available };
-                              try {
-                                const r = await fetch(`${API_ADMIN}/api/menu/${item._id}`, { method: 'PUT', headers: authH, body: JSON.stringify(updated) });
-                                if (r.ok) await reloadMenu();
-                              } catch { }
-                              setMenu(m => m.map(i => (i._id || i.id) === (item._id || item.id) ? updated : i));
-                            }}
-                            className={`flex items-center gap-1.5 flex-1 py-2 rounded-xl text-xs font-black uppercase transition-all justify-center ${item.available ? 'text-green-400 hover:bg-green-500/10' : 'text-red-400 hover:bg-red-500/10'}`}
-                            style={{ border: item.available ? '1px solid rgba(34,197,94,0.25)' : '1px solid rgba(239,68,68,0.25)' }}
-                          >
-                            {item.available ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
-                            {item.available ? 'On' : 'Off'}
-                          </button>
-                          {/* Edit */}
-                          <button
-                            onClick={() => openEdit(item)}
-                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black uppercase text-stone-400 hover:text-white transition-all"
-                            style={{ border: '1px solid rgba(255,255,255,0.1)' }}
-                          >
-                            <Pencil size={13} /> Edit
-                          </button>
-                          {/* Delete */}
-                          <button
-                            onClick={() => setDeleteItem(item)}
-                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black text-stone-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
-                            style={{ border: '1px solid rgba(255,255,255,0.07)' }}
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
-                      </div>
-                    </motion.div>
+                    </div>
                   ))}
-                </AnimatePresence>
-              </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  <AnimatePresence mode="popLayout">
+                    {filteredMenu.map(item => (
+                      <motion.div
+                        key={item._id || item.id} layout
+                        initial={{ opacity: 0, scale: 0.97 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="rounded-2xl overflow-hidden"
+                        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}
+                      >
+                        <div className="relative h-44 overflow-hidden bg-stone-900">
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            style={{ objectFit: item.imgFit || 'cover', objectPosition: item.imgPosition || 'center' }}
+                            className="w-full h-full transition-transform duration-500 hover:scale-105"
+                            onError={e => { e.target.src = '/images/placeholder.jpg'; }}
+                          />
+                          <div className="absolute inset-0" style={{ background: 'linear-gradient(to top,rgba(13,8,5,0.8),transparent 60%)' }} />
+                          {!item.available && (
+                            <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.55)' }}>
+                              <span className="text-white text-xs font-black tracking-widest uppercase px-4 py-2 rounded-full"
+                                style={{ background: 'rgba(239,68,68,0.8)', border: '1px solid rgba(239,68,68,0.5)' }}>
+                                Unavailable
+                              </span>
+                            </div>
+                          )}
+                          <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
+                            <div>
+                              <div className="font-corm text-xl font-bold text-white leading-tight">{item.name}</div>
+                              <div className="text-xs text-stone-400">{item.category}</div>
+                            </div>
+                            <div className="font-black text-xl" style={{ color: '#ff9a3c' }}>${item.price.toFixed(2)}</div>
+                          </div>
+                        </div>
+                        <div className="p-4">
+                          <p className="text-stone-500 text-xs leading-relaxed mb-2 line-clamp-2">{item.desc}</p>
+                          {item.sizes && item.sizes.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mb-3">
+                              {item.sizes.map((s, i) => (
+                                <span key={i} className="text-xs px-2 py-0.5 rounded-full font-black"
+                                  style={{ background: 'rgba(255,154,60,0.1)', color: '#ff9a3c', border: '1px solid rgba(255,154,60,0.2)' }}>
+                                  {s.label} {s.quantity}{s.unit} · ${Number(s.price).toFixed(2)}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          <div className="flex gap-2">
+                            <button
+                              onClick={async () => {
+                                const updated = { ...item, available: !item.available };
+                                try {
+                                  const r = await fetch(`${API_ADMIN}/api/menu/${item._id}`, { method: 'PUT', headers: authH, body: JSON.stringify(updated) });
+                                  if (r.ok) await reloadMenu();
+                                } catch { }
+                                setMenu(m => m.map(i => (i._id || i.id) === (item._id || item.id) ? updated : i));
+                              }}
+                              className={`flex items-center gap-1.5 flex-1 py-2 rounded-xl text-xs font-black uppercase transition-all justify-center ${item.available ? 'text-green-400 hover:bg-green-500/10' : 'text-red-400 hover:bg-red-500/10'}`}
+                              style={{ border: item.available ? '1px solid rgba(34,197,94,0.25)' : '1px solid rgba(239,68,68,0.25)' }}
+                            >
+                              {item.available ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
+                              {item.available ? 'On' : 'Off'}
+                            </button>
+                            <button
+                              onClick={() => openEdit(item)}
+                              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black uppercase text-stone-400 hover:text-white transition-all"
+                              style={{ border: '1px solid rgba(255,255,255,0.1)' }}
+                            >
+                              <Pencil size={13} /> Edit
+                            </button>
+                            <button
+                              onClick={() => setDeleteItem(item)}
+                              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-black text-stone-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                              style={{ border: '1px solid rgba(255,255,255,0.07)' }}
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              )}
             </div>
           )}
 
