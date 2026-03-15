@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import Stripe from "stripe";
 import Order from "../Models/Order.mjs";
 import { sendOrderNotifications } from "./orderController.mjs";

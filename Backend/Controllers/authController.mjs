@@ -1,12 +1,13 @@
-import jwt        from 'jsonwebtoken';
-import bcrypt     from 'bcryptjs';
-import crypto     from 'crypto';
-import nodemailer from 'nodemailer';
+import 'dotenv/config';
+import jwt          from 'jsonwebtoken';
+import bcrypt       from 'bcryptjs';
+import crypto       from 'crypto';
+import nodemailer   from 'nodemailer';
 import OwnerSettings from '../Models/OwnerSettings.mjs';
 
 const resetTokens = new Map();
 
-const transporter = nodemailer.createTransport({
+const makeTransporter = () => nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: process.env.EMAIL_USER,
@@ -21,7 +22,6 @@ export const login = async (req, res) => {
   if (!password)
     return res.status(400).json({ error: 'Password is required' });
 
-  // Check DB for latest hash, fall back to .env
   const setting = await OwnerSettings.findOne({ key: 'password_hash' });
   const hash    = setting?.value || process.env.OWNER_PASSWORD_HASH;
 
@@ -43,13 +43,13 @@ export const login = async (req, res) => {
 export const requestPasswordReset = async (req, res) => {
   try {
     const token   = crypto.randomBytes(32).toString('hex');
-    const expires = Date.now() + 1000 * 60 * 30; // 30 minutes
+    const expires = Date.now() + 1000 * 60 * 30;
 
     resetTokens.set(token, { expires });
 
     const resetLink = `${process.env.SITE_URL}/owner?reset=${token}`;
 
-    await transporter.sendMail({
+    await makeTransporter().sendMail({
       from:    `"Faith & Grace" <${process.env.EMAIL_USER}>`,
       to:      process.env.OWNER_EMAIL,
       subject: 'Password Reset — Faith & Grace Dashboard',
@@ -81,16 +81,13 @@ export const confirmPasswordReset = async (req, res) => {
 
     const hash = await bcrypt.hash(newPassword, 10);
 
-    // Save permanently to MongoDB — survives Render restarts
     await OwnerSettings.findOneAndUpdate(
       { key: 'password_hash' },
       { value: hash },
       { upsert: true, returnDocument: 'after' }
     );
 
-    // Also update in memory for immediate effect
     process.env.OWNER_PASSWORD_HASH = hash;
-
     resetTokens.delete(token);
 
     res.json({ message: 'Password updated successfully. You can now log in.' });
