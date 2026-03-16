@@ -3,7 +3,7 @@ import React from 'react';
 const WhatsApp = ({ order }) => {
   if (!order) return null;
 
-  const phoneNumber = '+233501657205'; // your WhatsApp number
+  const phoneNumber = '+233544930276'; // Owner WhatsApp number
 
   // Construct the pre-filled message
   const itemList = order.items

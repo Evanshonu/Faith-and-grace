@@ -8,6 +8,7 @@ import Menu from './pages/Menu';
 import Admin from './pages/Admin';
 import Checkout from './pages/Checkout';
 import OrderConfirmation from './pages/OrderConfirmation';
+import TrackOrder from './pages/TrackOrder';
 
 const Layout = () => {
   const location     = useLocation();
@@ -26,6 +27,7 @@ const Layout = () => {
           <Route path="/menu"               element={<Menu />}              />
           <Route path="/checkout"           element={<Checkout />}          />
           <Route path="/order-confirmation" element={<OrderConfirmation />} />
+          <Route path="/track" element={<TrackOrder />} />
           <Route path="/owner"              element={<Admin />}             />
         </Routes>
       </main>

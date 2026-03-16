@@ -220,6 +220,21 @@ export const updateOrderStatus = async (req, res) => {
   }
 };
 
+export const trackOrders = async (req, res) => {
+  try {
+    const { identifier } = req.params;
+    const orders = await Order.find({
+      $or: [
+        { phone: identifier },
+        { email: identifier },
+      ]
+    }).sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 export const getOrderByPayment = async (req, res) => {
   try {
     const order = await Order.findOne({ paymentId: req.params.paymentIntentId });

@@ -1,20 +1,18 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, ShoppingBag, Phone, UtensilsCrossed } from 'lucide-react';
+import { Menu, X, ShoppingBag, Phone, UtensilsCrossed, Package } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 
 const NAV_LINKS = [
-  { path: '/',     label: 'Home' },
-  { path: '/menu', label: 'Menu' },
+  { path: '/',      label: 'Home'        },
+  { path: '/menu',  label: 'Menu'        },
+  { path: '/track', label: 'Track Order' },
 ];
 
 const Navigation = () => {
-  const [isOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
-
-  // CartContext — badge count updates the instant Menu adds an item
   const { itemCount } = useCart();
   const isActive = path => location.pathname === path;
 
@@ -49,8 +47,8 @@ const Navigation = () => {
               <Link key={path} to={path}
                 className="relative text-sm font-black tracking-wider uppercase transition-colors"
                 style={{ color: isActive(path) ? '#ff9a3c' : '#a8927e' }}
-                onMouseEnter={e => !isActive(path) && (e.target.style.color = '#fff')}
-                onMouseLeave={e => !isActive(path) && (e.target.style.color = '#a8927e')}
+                onMouseEnter={e => !isActive(path) && (e.currentTarget.style.color = '#fff')}
+                onMouseLeave={e => !isActive(path) && (e.currentTarget.style.color = '#a8927e')}
               >
                 {label}
                 {isActive(path) && (
@@ -69,7 +67,7 @@ const Navigation = () => {
               <Phone size={14} /> 862-212-9328
             </a>
 
-            {/* Cart badge — links to /menu where the cart drawer lives */}
+            {/* Cart badge */}
             <Link to="/menu"
               className="relative p-2 rounded-xl transition-all hover:bg-white/5"
               style={{ color: '#a8927e' }}
@@ -91,6 +89,9 @@ const Navigation = () => {
 
           {/* MOBILE CONTROLS */}
           <div className="md:hidden flex items-center gap-3">
+            <Link to="/track" className="p-2 rounded-xl" style={{ color: '#a8927e' }}>
+              <Package size={20} />
+            </Link>
             <Link to="/menu" className="relative p-2 rounded-xl" style={{ color: '#a8927e' }}>
               <ShoppingBag size={22} />
               <AnimatePresence>
