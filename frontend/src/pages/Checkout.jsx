@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { loadStripe } from '@stripe/stripe-js';
@@ -80,14 +80,15 @@ const OrderSummary = ({ cartItems, customerInfo, subtotal }) => (
 /* ─── CUSTOMER FORM ─────────────────────────────────────────────────── */
 const CustomerForm = ({ onSubmit }) => {
   const saved = JSON.parse(localStorage.getItem('savedCustomer') || '{}');
-  const [form, setForm] = useState({ name: saved.name || '', phone: saved.phone || '', email: saved.email || '', method: 'pickup', address: '' });
+  const [form,       setForm]       = useState({ name: saved.name || '', phone: saved.phone || '', email: saved.email || '', method: 'pickup', address: '' });
+  const [submitting, setSubmitting] = useState(false);
   const set   = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const valid = form.name.trim() && form.phone.trim() && (form.method === 'pickup' || form.address.trim());
   const iCls  = "w-full px-4 py-3 rounded-xl text-white text-sm outline-none transition-all";
   const iSty  = { background: 'rgba(255,255,255,0.07)', border: '2px solid rgba(255,255,255,0.1)', fontFamily: 'inherit' };
 
   return (
-    <form onSubmit={e => { e.preventDefault(); if (valid) onSubmit(form); }} className="flex flex-col gap-5">
+   <form onSubmit={e => { e.preventDefault(); if (valid && !submitting) { setSubmitting(true); onSubmit(form); } }} className="flex flex-col gap-5">
       <div className="text-xs font-black tracking-widest uppercase text-stone-500 mb-1">Your Details</div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
@@ -121,7 +122,7 @@ const CustomerForm = ({ onSubmit }) => {
           <input value={form.address} onChange={e => set('address', e.target.value)} placeholder="Full delivery address" className={iCls} style={iSty} />
         </div>
       )}
-      <button type="submit" disabled={!valid}
+      <button type="submit" disabled={!valid || submitting}
         className="w-full py-4 rounded-2xl font-black text-sm tracking-widest uppercase text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed"
         style={{ background: valid ? 'linear-gradient(135deg,#c0392b,#e67e22)' : '#333', boxShadow: valid ? '0 6px 24px rgba(192,57,43,0.4)' : 'none' }}>
         Continue to Payment →
@@ -225,6 +226,7 @@ const Checkout = () => {
   const [loading,       setLoading]       = useState(false);
   const [initError,     setInitError]     = useState(null);
   const [success,       setSuccess]       = useState(false);
+  const intentCreating = useRef(false);
 
   const subtotal     = cart.reduce((s, i) => s + Number(i.price) * i.quantity, 0);
   const totalWithTax = parseFloat((subtotal * 1.08).toFixed(2));
@@ -234,6 +236,8 @@ const Checkout = () => {
   }, []); // eslint-disable-line
 
   const handleInfoSubmit = async info => {
+    if (intentCreating.current) return;
+    intentCreating.current = true;
     setCustomerInfo(info);
     setStep('payment');
     setLoading(true);
