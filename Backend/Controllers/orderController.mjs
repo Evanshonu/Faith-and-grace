@@ -137,7 +137,7 @@ export const sendOrderNotifications = async (order) => {
       console.log('✅ Customer email sent');
     }
   } catch (err) {
-    console.error('Email notification failed:', err.message);
+    console.error('Email notification failed — full error:', err.message);
   }
 };
 
@@ -186,7 +186,9 @@ export const createNewOrder = async (req, res) => {
     if (io) io.emit('new-order', order);
 
     // Send notifications async — don't block response
-    sendOrderNotifications(order).catch(console.error);
+    sendOrderNotifications(order)
+  .then(() => console.log('✅ Notifications sent for order:', order.orderId))
+  .catch(err => console.error('❌ Notification failed:', err.message));
 
     const whatsappURL = buildWhatsAppMessage(order);
     res.status(201).json({ ...order.toObject(), whatsappURL });
