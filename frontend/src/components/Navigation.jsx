@@ -13,7 +13,7 @@ const NAV_LINKS = [
 const Navigation = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
-  const { itemCount } = useCart();
+ const { itemCount, setCartOpen } = useCart();
   const isActive = path => location.pathname === path;
 
   return (
@@ -68,7 +68,8 @@ const Navigation = () => {
             </a>
 
             {/* Cart badge */}
-            <Link to="/menu"
+          <button
+              onClick={() => setCartOpen(true)}
               className="relative p-2 rounded-xl transition-all hover:bg-white/5"
               style={{ color: '#a8927e' }}
               onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
@@ -84,7 +85,7 @@ const Navigation = () => {
                   </motion.span>
                 )}
               </AnimatePresence>
-            </Link>
+            </button>
           </div>
 
           {/* MOBILE CONTROLS */}
@@ -92,7 +93,7 @@ const Navigation = () => {
             <Link to="/track" className="p-2 rounded-xl" style={{ color: '#a8927e' }}>
               <Package size={20} />
             </Link>
-            <Link to="/menu" className="relative p-2 rounded-xl" style={{ color: '#a8927e' }}>
+            <button onClick={() => setCartOpen(true)} className="relative p-2 rounded-xl" style={{ color: '#a8927e' }}>
               <ShoppingBag size={22} />
               <AnimatePresence>
                 {itemCount > 0 && (
@@ -104,7 +105,7 @@ const Navigation = () => {
                   </motion.span>
                 )}
               </AnimatePresence>
-            </Link>
+            </button>
             <button onClick={() => setMobileOpen(o => !o)}
               className="p-2 rounded-xl transition-colors" style={{ color: '#a8927e' }}>
               {mobileOpen ? <X size={22} /> : <Menu size={22} />}

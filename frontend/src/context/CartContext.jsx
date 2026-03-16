@@ -14,6 +14,7 @@ const CartContext = createContext(null);
 export const CartProvider = ({ children }) => {
   // Reads from localStorage on first load — survives page refresh
   const [cart, setCart] = useState(() => getCart());
+  const [cartOpen, setCartOpen] = useState(false);
 
   // Syncs cart if user has multiple tabs open
   useEffect(() => {
@@ -49,6 +50,8 @@ export const CartProvider = ({ children }) => {
       removeFromCart,
       updateCartItem,
       clearCart,
+      cartOpen,
+      setCartOpen,
       total:     getCartTotal(cart),
       itemCount: getCartItemCount(cart),
     }}>

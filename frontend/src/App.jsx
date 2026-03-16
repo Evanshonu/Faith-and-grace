@@ -9,6 +9,7 @@ import Admin from './pages/Admin';
 import Checkout from './pages/Checkout';
 import OrderConfirmation from './pages/OrderConfirmation';
 import TrackOrder from './pages/TrackOrder';
+import CartDrawer from './components/CartDrawer';
 
 const Layout = () => {
   const location     = useLocation();
@@ -31,6 +32,8 @@ const Layout = () => {
           <Route path="/owner"              element={<Admin />}             />
         </Routes>
       </main>
+      {!isAdminRoute && <CartDrawer />}
+      {!isAdminRoute && <Footer />}
       {!isAdminRoute && <Footer />}
     </div>
   );
