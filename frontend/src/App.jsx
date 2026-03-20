@@ -34,7 +34,6 @@ const Layout = () => {
       </main>
       {!isAdminRoute && <CartDrawer />}
       {!isAdminRoute && <Footer />}
-      {!isAdminRoute && <Footer />}
     </div>
   );
 };
