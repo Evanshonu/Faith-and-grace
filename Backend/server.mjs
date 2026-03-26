@@ -20,12 +20,11 @@ const PORT = process.env.PORT || 8000;
 const ALLOWED_ORIGINS = [
   'http://localhost:5173',
   'http://localhost:3000',
-    'http://localhost:8080',
+  'http://localhost:8080',
   'https://faith-and-grace-site.pages.dev',
   'https://www.graceefaith.com',
   'https://graceefaith.com',
 ];
-// Render/API URL : https://faith-and-grace.onrender.com
 
 // Webhook requires raw body before JSON middleware
 app.use('/webhook/stripe', express.raw({ type: 'application/json' }));
@@ -46,29 +45,26 @@ app.get('/', (req, res) =>
 
 app.use(errorHandler);
 
-// ------------------ SOCKET.IO SETUP ------------------
+// ── SOCKET.IO SETUP ───────────────────────────────────────────────────
 const startServer = async () => {
   await connectDB();
 
-  // Wrap Express app with HTTP server
   const server = createServer(app);
 
-  // Attach Socket.IO
+  // FIX: Restricted Socket.IO CORS to known origins (was "*")
   const io = new Server(server, {
     cors: {
-      origin: "*", // can restrict to frontend URLs
-      methods: ["GET", "POST"],
+      origin: ALLOWED_ORIGINS,
+      methods: ['GET', 'POST'],
     },
   });
 
-  // Save io in app locals to use inside routes/controllers
-  app.set("io", io);
+  app.set('io', io);
 
-  // Log connections for kitchen display
-  io.on("connection", (socket) => {
-    console.log("Kitchen client connected:", socket.id);
-    socket.on("disconnect", () => {
-      console.log("Kitchen client disconnected:", socket.id);
+  io.on('connection', (socket) => {
+    console.log('Kitchen client connected:', socket.id);
+    socket.on('disconnect', () => {
+      console.log('Kitchen client disconnected:', socket.id);
     });
   });
 

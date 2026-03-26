@@ -61,8 +61,8 @@ const inputStyle = {
 const focusRed = e => { e.target.style.borderColor = '#c0392b'; };
 const blurReset = e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; };
 
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// FIX: Moved to top so both ForgotPassword and LoginPage can use it
+const API_ADMIN = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 /* ─── FORGOT PASSWORD ────────────────────────────────────────────────── */
 const ForgotPassword = () => {
@@ -196,7 +196,7 @@ const LoginPage = ({ onLogin }) => {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('https://faith-and-grace.onrender.com/api/auth/login', {
+      const res = await fetch(`${API_ADMIN}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: pw }),
@@ -842,8 +842,6 @@ const OrderCard = ({ order, onStatusChange, isPast }) => {
 };
 
 /* ─── MAIN DASHBOARD ─────────────────────────────────────────────────── */
-const API_ADMIN = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
 const Dashboard = ({ onLogout }) => {
   const [tab, setTab] = useState('overview');
   const [menu, setMenu] = useState([]);

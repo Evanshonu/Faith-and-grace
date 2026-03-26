@@ -14,6 +14,8 @@ import CartDrawer from './components/CartDrawer';
 const Layout = () => {
   const location     = useLocation();
   const isAdminRoute = location.pathname === '/owner';
+  // Also hide nav/footer on checkout for cleaner UX
+  const isCheckout   = location.pathname === '/checkout';
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -21,19 +23,20 @@ const Layout = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {!isAdminRoute && <Navigation />}
+      {!isAdminRoute && !isCheckout && <Navigation />}
       <main className="flex-1">
         <Routes>
           <Route path="/"                   element={<Home />}              />
           <Route path="/menu"               element={<Menu />}              />
           <Route path="/checkout"           element={<Checkout />}          />
           <Route path="/order-confirmation" element={<OrderConfirmation />} />
-          <Route path="/track" element={<TrackOrder />} />
+          <Route path="/track"              element={<TrackOrder />}        />
           <Route path="/owner"              element={<Admin />}             />
         </Routes>
       </main>
-      {!isAdminRoute && <CartDrawer />}
-      {!isAdminRoute && <Footer />}
+      {/* FIX: Footer was rendered twice — removed duplicate */}
+      {!isAdminRoute && !isCheckout && <CartDrawer />}
+      {!isAdminRoute && !isCheckout && <Footer />}
     </div>
   );
 };

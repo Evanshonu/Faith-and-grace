@@ -26,8 +26,10 @@ export const orderAPI = {
     api.patch(`/api/orders/${id}`, { status })
 };
 
+// FIX: was "/payments/create" — correct path is "/api/payments/create-intent"
 export const paymentAPI = {
-  createIntent: (data) => api.post("/payments/create", data)
+  getConfig: () => api.get("/api/payments/config"),
+  createIntent: (data) => api.post("/api/payments/create-intent", data)
 };
 
 export default api;
