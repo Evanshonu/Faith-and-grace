@@ -2,18 +2,12 @@ import 'dotenv/config';
 import jwt          from 'jsonwebtoken';
 import bcrypt       from 'bcryptjs';
 import crypto       from 'crypto';
-import nodemailer   from 'nodemailer';
+import { Resend }  from 'resend';
 import OwnerSettings from '../Models/OwnerSettings.mjs';
 
+const resend      = new Resend(process.env.RESEND_API_KEY);
+const FROM_EMAIL  = 'Faith & Grace <onboarding@resend.dev>';
 const resetTokens = new Map();
-
-const makeTransporter = () => nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
 
 /* ─── LOGIN ─────────────────────────────────────────────────────────── */
 export const login = async (req, res) => {
@@ -49,8 +43,8 @@ export const requestPasswordReset = async (req, res) => {
 
     const resetLink = `${process.env.SITE_URL}/owner?reset=${token}`;
 
-    await makeTransporter().sendMail({
-      from:    `"Faith & Grace" <${process.env.EMAIL_USER}>`,
+    await resend.emails.send({
+      from:    FROM_EMAIL,
       to:      process.env.OWNER_EMAIL,
       subject: 'Password Reset — Faith & Grace Dashboard',
       html: `
