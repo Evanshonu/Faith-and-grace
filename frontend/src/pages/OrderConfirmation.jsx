@@ -8,8 +8,8 @@ import {
 } from 'lucide-react';
 
 const API_BASE          = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-const OWNER_PHONE       = '233544930267';
-const OWNER_PHONE_DISPLAY = '+233 54 493 0267';
+const OWNER_PHONE       = '+18622668267';
+const OWNER_PHONE_DISPLAY = '+1 862 266 8267';
 
 const STATUS_STEPS = [
   { key: 'pending',   label: 'Order Received', icon: CheckCircle },
