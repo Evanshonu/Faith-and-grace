@@ -81,9 +81,8 @@ STRIPE_PUBLISHABLE_KEY set to your Stripe test publishable key.
 To generate the password hash run this once.
 node generateHash.mjs
 Copy the output and paste it as the value for OWNER_PASSWORD_HASH in the .env file.
+Seed the menu into the database run this once.
 
-To seed the menu into the database run this once.
-node seed.mjs
 
 To start the backend run this.
 npm run dev
@@ -108,11 +107,6 @@ The backend saves the order to MongoDB.
 The customer is redirected to the order confirmation page.
 
 
-OWNER LOGIN
-
-Go to the /owner page in the browser and enter the password set during setup. The session expires after 12 hours and the owner will be asked to log in again.
-
-
 API ENDPOINTS
 
 POST /api/auth/login — owner login, returns a JWT token.
@@ -129,23 +123,11 @@ POST /api/create-payment-intent — public, creates a Stripe payment intent.
 POST /api/confirm-payment — public, confirms payment was successful.
 
 
-GOING LIVE
-
-When the app is ready for real customers make two changes.
-
-First, swap the Stripe test keys for live keys in the .env file. Replace sk_test with sk_live and pk_test with pk_live.
-
-Second, update the CORS origin in server.mjs from http://localhost:5173 to your real domain name.
-
-No other code changes are needed.
-
 
 CONTACT
 OWNER:
 Phone: 862-212-9328
 Email: gnigriel@yahoo.com
-
-RESET-PASS=node -e "import('bcryptjs').then(b => b.default.hash('yournewpassword', 10).then(console.log))"
 
 ARCHITECTURE:
 
