@@ -6,13 +6,17 @@ import {
   CheckCircle, XCircle, Phone, Package,
   Truck, ChefHat, LayoutDashboard, MessageCircle,
 } from 'lucide-react';
+import {
+  API_BASE_URL,
+  CONTACT,
+  CONTACT_LINKS,
+  normalizeOrderStatus,
+} from '../config/site';
 
-const API_BASE          = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-const OWNER_PHONE       = '+18622668267';
-const OWNER_PHONE_DISPLAY = '+1 862 266 8267';
+const API_BASE = API_BASE_URL;
 
 const STATUS_STEPS = [
-  { key: 'pending',   label: 'Order Received', icon: CheckCircle },
+  { key: 'paid',      label: 'Order Received', icon: CheckCircle },
   { key: 'preparing', label: 'Preparing',       icon: ChefHat     },
   { key: 'ready',     label: 'Ready',           icon: Package     },
   { key: 'delivered', label: 'Delivered',       icon: Truck       },
@@ -28,7 +32,6 @@ const OrderConfirmation = () => {
   const [paymentId, setPaymentId] = useState(null);
 
   const initialized = useRef(false);
-  const isOwner     = !!localStorage.getItem('fg_admin_token');
 
   useEffect(() => {
     if (initialized.current) return;
@@ -114,7 +117,7 @@ const OrderConfirmation = () => {
   }, [paymentId, status]);
 
   const whatsappLink = () => {
-    if (!order) return `https://wa.me/${OWNER_PHONE}`;
+    if (!order) return CONTACT_LINKS.whatsapp;
     const items = (order.items || [])
       .map(i => `• ${i.name} x${i.qty}`)
       .join('%0A');
@@ -126,10 +129,12 @@ const OrderConfirmation = () => {
       `Items:%0A${items}%0A%0A` +
       `Total: $${(order.total || 0).toFixed(2)}%0A%0A` +
       `Method: ${order.method === 'delivery' ? `Delivery to ${order.address}` : 'Pickup'}`;
-    return `https://wa.me/${OWNER_PHONE}?text=${msg}`;
+    return `${CONTACT_LINKS.whatsapp}?text=${msg}`;
   };
 
-  const currentStep = STATUS_STEPS.findIndex(s => s.key === order?.status);
+  const currentStep = STATUS_STEPS.findIndex(
+    s => s.key === normalizeOrderStatus(order?.status)
+  );
 
   if (status === 'loading') return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-4"
@@ -248,11 +253,11 @@ const OrderConfirmation = () => {
               </a>
 
               <a
-                href={`tel:+${OWNER_PHONE}`}
+                href={CONTACT_LINKS.phone}
                 className="flex items-center justify-center gap-2 py-3.5 rounded-xl text-white text-sm font-black tracking-wide uppercase transition-all hover:-translate-y-0.5"
                 style={{ background: 'linear-gradient(135deg,#c0392b,#e67e22)', boxShadow: '0 4px 16px rgba(192,57,43,0.3)' }}
               >
-                <Phone size={17} /> Call Us · {OWNER_PHONE_DISPLAY}
+                <Phone size={17} /> Call Us · {CONTACT.phoneIntlDisplay}
               </a>
 
               <button

@@ -7,7 +7,14 @@ import OwnerSettings from '../Models/OwnerSettings.mjs';
 
 const resend      = new Resend(process.env.RESEND_API_KEY);
 const FROM_EMAIL  = 'Faith & Grace <onboarding@resend.dev>';
-const resetTokens = new Map();
+
+const getOwnerPasswordHash = async () => {
+  const setting = await OwnerSettings.findOne({ key: 'password_hash' });
+  return setting?.value || process.env.OWNER_PASSWORD_HASH || '';
+};
+
+const buildResetReference = (hash) =>
+  crypto.createHash('sha256').update(hash).digest('hex').slice(0, 16);
 
 /* ─── LOGIN ─────────────────────────────────────────────────────────── */
 export const login = async (req, res) => {
@@ -16,8 +23,10 @@ export const login = async (req, res) => {
   if (!password)
     return res.status(400).json({ error: 'Password is required' });
 
-  const setting = await OwnerSettings.findOne({ key: 'password_hash' });
-  const hash    = setting?.value || process.env.OWNER_PASSWORD_HASH;
+  const hash = await getOwnerPasswordHash();
+
+  if (!hash)
+    return res.status(500).json({ error: 'Owner password is not configured' });
 
   const valid = await bcrypt.compare(password, hash);
 
@@ -36,10 +45,18 @@ export const login = async (req, res) => {
 /* ─── REQUEST PASSWORD RESET ─────────────────────────────────────────── */
 export const requestPasswordReset = async (req, res) => {
   try {
-    const token   = crypto.randomBytes(32).toString('hex');
-    const expires = Date.now() + 1000 * 60 * 30;
+    const hash = await getOwnerPasswordHash();
+    if (!hash)
+      return res.status(500).json({ error: 'Owner password is not configured' });
 
-    resetTokens.set(token, { expires });
+    const token = jwt.sign(
+      {
+        type: 'owner_password_reset',
+        ref: buildResetReference(hash),
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '30m' }
+    );
 
     const resetLink = `${process.env.SITE_URL}/owner?reset=${token}`;
 
@@ -69,8 +86,15 @@ export const confirmPasswordReset = async (req, res) => {
   try {
     const { token, newPassword } = req.body;
 
-    const record = resetTokens.get(token);
-    if (!record || Date.now() > record.expires)
+    if (!token || !newPassword || newPassword.length < 6)
+      return res.status(400).json({ error: 'A valid token and password are required' });
+
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    if (payload.type !== 'owner_password_reset')
+      return res.status(400).json({ error: 'Reset link is invalid or expired' });
+
+    const currentHash = await getOwnerPasswordHash();
+    if (!currentHash || payload.ref !== buildResetReference(currentHash))
       return res.status(400).json({ error: 'Reset link is invalid or expired' });
 
     const hash = await bcrypt.hash(newPassword, 10);
@@ -82,11 +106,10 @@ export const confirmPasswordReset = async (req, res) => {
     );
 
     process.env.OWNER_PASSWORD_HASH = hash;
-    resetTokens.delete(token);
 
     res.json({ message: 'Password updated successfully. You can now log in.' });
   } catch (err) {
-    console.error('Reset failed:', err);
-    res.status(500).json({ error: 'Reset failed' });
+    console.error('Reset failed:', err.message);
+    res.status(400).json({ error: 'Reset link is invalid or expired' });
   }
 };

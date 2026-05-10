@@ -7,6 +7,7 @@ import {
   Clock, CheckCircle, Truck, Package, Search,
   DollarSign, ImagePlus, Save,
 } from 'lucide-react';
+import { API_BASE_URL } from '../config/site';
 
 /* ─── CONSTANTS ──────────────────────────────────────────────────────── */
 const INITIAL_MENU = [
@@ -22,7 +23,7 @@ const INITIAL_MENU = [
 
 const INITIAL_ORDERS = [
   { id: 'ORD-001', customer: 'Abena Mensah', phone: '973-555-0101', items: [{ name: 'Jollof Rice', qty: 2, price: 12.99 }, { name: 'Fried Fish', qty: 1, price: 10.99 }], total: 36.97, method: 'pickup', status: 'preparing', time: '2 min ago', date: '2025-01-15 12:30' },
-  { id: 'ORD-002', customer: 'Kofi Asante', phone: '973-555-0202', items: [{ name: 'Waakye', qty: 1, price: 11.99 }, { name: 'Pepper Sauce', qty: 2, price: 3.99 }], total: 19.97, method: 'delivery', status: 'pending', time: '5 min ago', date: '2025-01-15 12:27' },
+  { id: 'ORD-002', customer: 'Kofi Asante', phone: '973-555-0202', items: [{ name: 'Waakye', qty: 1, price: 11.99 }, { name: 'Pepper Sauce', qty: 2, price: 3.99 }], total: 19.97, method: 'delivery', status: 'paid', time: '5 min ago', date: '2025-01-15 12:27' },
   { id: 'ORD-003', customer: 'Serena Mills', phone: '862-555-0303', items: [{ name: 'Banku & Tilapia', qty: 2, price: 15.99 }], total: 31.98, method: 'pickup', status: 'ready', time: '12 min ago', date: '2025-01-15 12:20' },
   { id: 'ORD-004', customer: 'Marcus Brown', phone: '201-555-0404', items: [{ name: 'Fufu', qty: 1, price: 13.99 }, { name: 'Bofrot', qty: 2, price: 6.99 }], total: 27.97, method: 'delivery', status: 'delivered', time: '1 hr ago', date: '2025-01-15 11:30' },
   { id: 'ORD-005', customer: 'Ama Owusu', phone: '973-555-0505', items: [{ name: 'Jollof Rice', qty: 3, price: 12.99 }, { name: 'Pepper Sauce', qty: 1, price: 3.99 }], total: 42.96, method: 'pickup', status: 'delivered', time: '2 hrs ago', date: '2025-01-15 10:30' },
@@ -62,7 +63,7 @@ const focusRed = e => { e.target.style.borderColor = '#c0392b'; };
 const blurReset = e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; };
 
 // FIX: Moved to top so both ForgotPassword and LoginPage can use it
-const API_ADMIN = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_ADMIN = API_BASE_URL;
 
 /* ─── FORGOT PASSWORD ────────────────────────────────────────────────── */
 const ForgotPassword = () => {
@@ -736,7 +737,7 @@ const DeleteConfirm = ({ item, onConfirm, onClose }) => (
 /* ─── ORDER CARD ─────────────────────────────────────────────────────── */
 const OrderCard = ({ order, onStatusChange, isPast }) => {
   const [expanded, setExpanded] = useState(false);
-  const cfg = STATUS_CONFIG[order.status] || STATUS_CONFIG['pending'];
+  const cfg = STATUS_CONFIG[order.status] || STATUS_CONFIG['paid'];
   const nextStatus = NEXT_STATUS[order.status];
   const orderId = order._id || order.id;
   const isReady = order.status === 'ready';

@@ -6,8 +6,9 @@ import {
   CheckCircle, Users, Star, Trash2, CreditCard, Clock, PartyPopper,
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { API_BASE_URL, CONTACT_LINKS } from '../config/site';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE = API_BASE_URL;
 
 const PARTY_PERKS = [
   'Feeds 20 to 300+ guests', 'Customisable menu selection',
@@ -318,14 +319,14 @@ const Menu = () => {
               ))}
             </div>
             <div className="flex gap-3 flex-wrap">
-              <a href="mailto:gnigriel@yahoo.com"
+              <a href={CONTACT_LINKS.email}
                 className="inline-flex items-center gap-2 px-7 py-3 rounded-lg font-black text-sm tracking-widest uppercase text-white transition-all no-underline"
                 style={{ background: '#c0392b', border: '2px solid #c0392b', boxShadow: '0 4px 20px rgba(192,57,43,0.5)' }}
                 onMouseEnter={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = '#c0392b'; }}
                 onMouseLeave={e => { e.currentTarget.style.background = '#c0392b'; e.currentTarget.style.color = '#fff'; }}>
                 <Mail size={16} /> Email Us
               </a>
-              <a href="tel:862-212-9328"
+              <a href={CONTACT_LINKS.phone}
                 className="inline-flex items-center gap-2 px-7 py-3 rounded-lg font-black text-sm tracking-widest uppercase text-white transition-all hover:bg-white/10 no-underline"
                 style={{ border: '2px solid rgba(255,255,255,0.6)' }}>
                 <Phone size={16} /> Call Us

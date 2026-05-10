@@ -4,6 +4,7 @@ import {
   UtensilsCrossed, Phone, Mail, MapPin,
   Instagram, Facebook, Twitter,
 } from 'lucide-react';
+import { CONTACT, CONTACT_LINKS } from '../config/site';
 
 const FOOTER_LINKS = [
   { label: 'Home',   path: '/'     },
@@ -130,7 +131,7 @@ const Footer = () => (
           </div>
           <div className="flex flex-col gap-4">
             <a
-              href="tel:862-212-9328"
+              href={CONTACT_LINKS.phone}
               className="flex items-start gap-3 group"
             >
               <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-all group-hover:bg-white/10"
@@ -140,13 +141,13 @@ const Footer = () => (
               <div>
                 <div className="text-xs font-black tracking-widest uppercase mb-0.5" style={{ color: '#7a5c48' }}>Phone</div>
                 <div className="text-sm font-black text-white group-hover:text-orange-400 transition-colors">
-                  862-212-9328
+                  {CONTACT.phoneDisplay}
                 </div>
               </div>
             </a>
 
             <a
-              href="mailto:gnigriel@yahoo.com"
+              href={CONTACT_LINKS.email}
               className="flex items-start gap-3 group"
             >
               <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-all group-hover:bg-white/10"
@@ -156,7 +157,7 @@ const Footer = () => (
               <div>
                 <div className="text-xs font-black tracking-widest uppercase mb-0.5" style={{ color: '#7a5c48' }}>Email</div>
                 <div className="text-sm font-black text-white group-hover:text-orange-400 transition-colors">
-                  gnigriel@yahoo.com
+                  {CONTACT.email}
                 </div>
               </div>
             </a>

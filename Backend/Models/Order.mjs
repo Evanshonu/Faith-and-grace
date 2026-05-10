@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import Counter from './Counter.mjs';
 
 const orderItemSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -19,11 +20,60 @@ const orderSchema = new mongoose.Schema({
   paymentId: { type: String, default: null },
 }, { timestamps: true });
 
-// Auto-generate orderId
+const COUNTER_KEY = 'orderId';
+
+const getCurrentMaxOrderSequence = async () => {
+  const [result] = await mongoose.model('Order').aggregate([
+    {
+      $match: {
+        orderId: { $type: 'string', $regex: /^ORD-\d+$/ },
+      },
+    },
+    {
+      $project: {
+        seq: {
+          $convert: {
+            input: { $arrayElemAt: [{ $split: ['$orderId', '-'] }, 1] },
+            to: 'int',
+            onError: 0,
+            onNull: 0,
+          },
+        },
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        maxSeq: { $max: '$seq' },
+      },
+    },
+  ]);
+
+  return result?.maxSeq || 0;
+};
+
+// Auto-generate orderId using an atomic counter to avoid collisions.
 orderSchema.pre('save', async function () {
-  if (!this.isNew) return;
-  const count = await mongoose.model('Order').countDocuments();
-  this.orderId = `ORD-${String(count + 1).padStart(3, '0')}`;
+  if (!this.isNew || this.orderId) return;
+
+  const existingCounter = await Counter.findOne({ key: COUNTER_KEY }).lean();
+
+  if (!existingCounter) {
+    const maxSeq = await getCurrentMaxOrderSequence();
+    await Counter.findOneAndUpdate(
+      { key: COUNTER_KEY },
+      { $setOnInsert: { key: COUNTER_KEY, seq: maxSeq } },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+  }
+
+  const counter = await Counter.findOneAndUpdate(
+    { key: COUNTER_KEY },
+    { $inc: { seq: 1 } },
+    { new: true }
+  );
+
+  this.orderId = `ORD-${String(counter.seq).padStart(3, '0')}`;
 });
 
 orderSchema.add({ orderId: { type: String } });

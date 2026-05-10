@@ -1,9 +1,8 @@
 import React from 'react';
+import { CONTACT_LINKS } from '../config/site';
 
 const WhatsApp = ({ order }) => {
   if (!order) return null;
-
-  const phoneNumber = '+18622668267'; // Owner WhatsApp number
 
   // Construct the pre-filled message
   const itemList = order.items
@@ -13,7 +12,7 @@ const WhatsApp = ({ order }) => {
   const message = `Hello! I just placed an order.\n\nOrder ID: ${order._id}\nName: ${order.customerName}\nPhone: ${order.customerPhone}\nItems:\n${itemList}\nTotal: $${order.total.toFixed(2)}`;
 
   const encodedMessage = encodeURIComponent(message);
-  const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+  const whatsappURL = `${CONTACT_LINKS.whatsapp}?text=${encodedMessage}`;
 
   return (
     <a

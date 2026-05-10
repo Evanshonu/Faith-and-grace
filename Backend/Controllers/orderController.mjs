@@ -5,8 +5,10 @@ import { Resend }  from 'resend';
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const VALID_STATUSES = ['paid', 'preparing', 'ready', 'delivered'];
-const OWNER_WHATSAPP = process.env.OWNER_PHONE || '18622129328';
-const FROM_EMAIL     = 'Faith & Grace <onboarding@resend.dev>';
+const OWNER_PHONE_E164 = process.env.OWNER_PHONE || '18622129328';
+const OWNER_PHONE_DISPLAY = process.env.OWNER_PHONE_DISPLAY || '+1 862-212-9328';
+const FROM_EMAIL = 'Faith & Grace <onboarding@resend.dev>';
+const OWNER_TEL_LINK = `tel:+${OWNER_PHONE_E164}`;
 
 const buildWhatsAppMessage = (order) => {
   const itemsList = (order.items || [])
@@ -19,7 +21,7 @@ const buildWhatsAppMessage = (order) => {
     `Phone: ${order.phone}\n\n` +
     `Items:\n${itemsList}\n\n` +
     `Total: $${order.total.toFixed(2)}`;
-  return `https://wa.me/${OWNER_WHATSAPP}?text=${encodeURIComponent(message)}`;
+  return `https://wa.me/${OWNER_PHONE_E164}?text=${encodeURIComponent(message)}`;
 };
 
 export const sendOrderNotifications = async (order) => {
@@ -50,7 +52,7 @@ export const sendOrderNotifications = async (order) => {
           </div>
         </div>
         <p style="color:#a89080;font-size:14px;">Method: ${order.method === 'pickup' ? 'Pickup' : 'Delivery to ' + order.address}</p>
-        <p style="color:#a89080;font-size:14px;">Questions? Call us: <a href="tel:+18622129328" style="color:#ff9a3c;">+1 862-212-9328</a></p>
+        <p style="color:#a89080;font-size:14px;">Questions? Call us: <a href="${OWNER_TEL_LINK}" style="color:#ff9a3c;">${OWNER_PHONE_DISPLAY}</a></p>
       </div>
     </div>
   `;

@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, CheckCircle, ChefHat, Package, Truck, Clock } from 'lucide-react';
+import { API_BASE_URL, normalizeOrderStatus } from '../config/site';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE = API_BASE_URL;
 
 const STATUS_STEPS = [
   { key: 'paid',      label: 'Order Received', icon: CheckCircle, color: '#a855f7' },
@@ -12,7 +13,9 @@ const STATUS_STEPS = [
 ];
 
 const StatusBar = ({ status }) => {
-  const currentIdx = STATUS_STEPS.findIndex(s => s.key === status);
+  const currentIdx = STATUS_STEPS.findIndex(
+    s => s.key === normalizeOrderStatus(status)
+  );
   return (
     <div className="flex items-center justify-between mt-4">
       {STATUS_STEPS.map((step, i) => {

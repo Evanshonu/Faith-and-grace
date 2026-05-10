@@ -5,8 +5,9 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, ShoppingBag, CheckCircle, AlertCircle, ChevronLeft, Truck, Package, UtensilsCrossed } from 'lucide-react';
+import { API_BASE_URL } from '../config/site';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE = API_BASE_URL;
 
 const stripeAppearance = {
   theme: 'night',

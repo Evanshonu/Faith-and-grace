@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, ShoppingBag, Phone, UtensilsCrossed, Package } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { CONTACT, CONTACT_LINKS } from '../config/site';
 
 const NAV_LINKS = [
   { path: '/',      label: 'Home'        },
@@ -59,12 +60,12 @@ const Navigation = () => {
               </Link>
             ))}
 
-            <a href="tel:862-212-9328"
+            <a href={CONTACT_LINKS.phone}
               className="flex items-center gap-2 text-sm font-black tracking-wide transition-colors"
               style={{ color: '#a8927e' }}
               onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
               onMouseLeave={e => (e.currentTarget.style.color = '#a8927e')}>
-              <Phone size={14} /> 862-212-9328
+              <Phone size={14} /> {CONTACT.phoneDisplay}
             </a>
 
             {/* Cart badge */}
@@ -130,10 +131,10 @@ const Navigation = () => {
                   {label}
                 </Link>
               ))}
-              <a href="tel:862-212-9328"
+              <a href={CONTACT_LINKS.phone}
                 className="flex items-center gap-3 py-3 px-4 rounded-xl text-sm font-black"
                 style={{ color: '#a8927e', border: '1px solid transparent' }}>
-                <Phone size={14} /> 862-212-9328
+                <Phone size={14} /> {CONTACT.phoneDisplay}
               </a>
             </div>
           </motion.div>

@@ -5,6 +5,7 @@ import {
   ShoppingBag, Heart, Sparkles, Clock, Phone, Mail,
   ArrowRight, Star, ChevronRight, MapPin, CheckCircle, Flame,
 } from 'lucide-react';
+import { CONTACT, CONTACT_LINKS } from '../config/site';
 
 const HERO_IMAGES = [
   '/images/bankuandtilapia.webp',
@@ -133,7 +134,7 @@ const Home = () => {
               onMouseLeave={e => { e.currentTarget.style.background = '#c0392b'; e.currentTarget.style.color = '#fff'; }}>
               View Our Menu <ArrowRight size={18} />
             </Link>
-            <a href="tel:862-212-9328"
+            <a href={CONTACT_LINKS.phone}
               className="inline-flex items-center gap-2 px-8 py-4 rounded-lg font-black text-sm tracking-widest uppercase text-white transition-all duration-300 hover:-translate-y-1"
               style={{ background: 'rgba(255,255,255,0.12)', border: '2px solid #fff', backdropFilter: 'blur(8px)' }}
               onMouseEnter={e => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = '#c0392b'; }}
@@ -398,8 +399,8 @@ const Home = () => {
             </p>
             <div className="flex justify-center gap-4 flex-wrap mb-10">
               {[
-                { icon: Phone, label: 'Call Us',  value: '862-212-9328',       href: 'tel:862-212-9328' },
-                { icon: Mail,  label: 'Email Us', value: 'gnigriel@yahoo.com', href: 'mailto:gnigriel@yahoo.com' },
+                { icon: Phone, label: 'Call Us',  value: CONTACT.phoneDisplay, href: CONTACT_LINKS.phone },
+                { icon: Mail,  label: 'Email Us', value: CONTACT.email, href: CONTACT_LINKS.email },
               ].map(({ icon: Icon, label, value, href }) => (
                 <a key={label} href={href}
                   className="flex items-center gap-4 rounded-2xl px-6 py-4 transition-all hover:-translate-y-1 no-underline"
