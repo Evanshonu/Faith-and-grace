@@ -88,7 +88,8 @@ GET /api/orders/track/:identifier - Track order by phone or email
 GET /api/orders/by-payment/:id - Get order by payment ID
 GET /api/payments/config - Get Stripe publishable key
 POST /api/payments/create-intent - Create a payment intent
-POST /webhook/stripe - Stripe webhook handler
+POST /api/webhook - Stripe webhook handler
+POST /webhook/stripe - Legacy Stripe webhook handler
 
 
 DEPLOYMENT

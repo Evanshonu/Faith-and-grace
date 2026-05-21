@@ -64,6 +64,76 @@ const blurReset = e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; }
 
 // FIX: Moved to top so both ForgotPassword and LoginPage can use it
 const API_ADMIN = API_BASE_URL;
+const SOCKET_CLIENT_URL = `${API_ADMIN.replace(/\/$/, '')}/socket.io/socket.io.js`;
+
+let socketClientLoader = null;
+
+const loadSocketClient = () => {
+  if (typeof window === 'undefined') {
+    return Promise.reject(new Error('Window unavailable'));
+  }
+
+  if (window.io) {
+    return Promise.resolve(window.io);
+  }
+
+  if (socketClientLoader) {
+    return socketClientLoader;
+  }
+
+  socketClientLoader = new Promise((resolve, reject) => {
+    let script = document.querySelector('script[data-fg-socket-client="true"]');
+
+    const handleLoad = () => {
+      if (window.io) {
+        resolve(window.io);
+      } else {
+        reject(new Error('Socket.IO client did not initialize'));
+      }
+    };
+
+    const handleError = () => {
+      reject(new Error('Unable to load Socket.IO client'));
+    };
+
+    if (script) {
+      script.addEventListener('load', handleLoad, { once: true });
+      script.addEventListener('error', handleError, { once: true });
+      return;
+    }
+
+    script = document.createElement('script');
+    script.src = SOCKET_CLIENT_URL;
+    script.async = true;
+    script.dataset.fgSocketClient = 'true';
+    script.addEventListener('load', handleLoad, { once: true });
+    script.addEventListener('error', handleError, { once: true });
+    document.head.appendChild(script);
+  }).catch(err => {
+    socketClientLoader = null;
+    throw err;
+  });
+
+  return socketClientLoader;
+};
+
+const getOrderIdentity = (order) =>
+  order?._id || order?.paymentId || order?.stripePaymentIntent || order?.orderId || order?.id;
+
+const mergeIncomingOrder = (currentOrders, incomingOrder) => {
+  if (!incomingOrder) return currentOrders;
+
+  const incomingId = getOrderIdentity(incomingOrder);
+
+  if (!incomingId) {
+    return [incomingOrder, ...currentOrders];
+  }
+
+  return [
+    incomingOrder,
+    ...currentOrders.filter(order => getOrderIdentity(order) !== incomingId),
+  ];
+};
 
 /* ─── FORGOT PASSWORD ────────────────────────────────────────────────── */
 const ForgotPassword = () => {
@@ -848,12 +918,17 @@ const Dashboard = ({ onLogout }) => {
   const [menu, setMenu] = useState([]);
   const [loadingMenu, setLoadingMenu] = useState(true);
   const [orders, setOrders] = useState([]);
+  const [liveNotice, setLiveNotice] = useState(null);
   const [editItem, setEditItem] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [categories, setCategories] = useState(CATEGORIES);
   const [deleteItem, setDeleteItem] = useState(null);
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState('All');
+  const socketRef = useRef(null);
+  const liveNoticeTimerRef = useRef(null);
+  const liveReloadTimerRef = useRef(null);
+  const socketErrorLoggedRef = useRef(false);
 
   const token = localStorage.getItem('fg_admin_token');
   const authH = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
@@ -880,7 +955,7 @@ const Dashboard = ({ onLogout }) => {
     loadMenu();
     loadOrders();
 
-    // Poll orders every 30 seconds for real-time updates
+    // Keep polling as a production-safe fallback even when live socket updates are active.
     const interval = setInterval(loadOrders, 15000);
     return () => clearInterval(interval);
   }, []);
@@ -939,6 +1014,81 @@ const Dashboard = ({ onLogout }) => {
     } catch (err) { console.error('Orders reload failed:', err); }
   };
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const showLiveOrderNotice = (order) => {
+      setLiveNotice({
+        id: getOrderIdentity(order) || Date.now(),
+        orderId: order.orderId || 'New order',
+        customer: order.customer || 'Customer',
+      });
+
+      if (liveNoticeTimerRef.current) clearTimeout(liveNoticeTimerRef.current);
+      liveNoticeTimerRef.current = setTimeout(() => {
+        setLiveNotice(null);
+      }, 8000);
+    };
+
+    const queueOrdersRefresh = () => {
+      if (liveReloadTimerRef.current) clearTimeout(liveReloadTimerRef.current);
+      liveReloadTimerRef.current = setTimeout(() => {
+        reloadOrders();
+      }, 1200);
+    };
+
+    const connectLiveOrders = async () => {
+      try {
+        const io = await loadSocketClient();
+        if (cancelled) return;
+
+        const socket = io(API_ADMIN, {
+          transports: ['websocket', 'polling'],
+          withCredentials: true,
+        });
+
+        socketRef.current = socket;
+
+        socket.on('connect', () => {
+          socketErrorLoggedRef.current = false;
+        });
+
+        socket.on('new-order', (incomingOrder) => {
+          if (!incomingOrder) return;
+
+          setOrders(currentOrders => mergeIncomingOrder(currentOrders, incomingOrder));
+          showLiveOrderNotice(incomingOrder);
+          queueOrdersRefresh();
+        });
+
+        socket.on('connect_error', (err) => {
+          if (socketErrorLoggedRef.current) return;
+          socketErrorLoggedRef.current = true;
+          console.warn('Live order updates unavailable, polling will continue:', err.message);
+        });
+      } catch (err) {
+        if (!socketErrorLoggedRef.current) {
+          socketErrorLoggedRef.current = true;
+          console.warn('Live order updates unavailable, polling will continue:', err.message);
+        }
+      }
+    };
+
+    connectLiveOrders();
+
+    return () => {
+      cancelled = true;
+
+      if (liveNoticeTimerRef.current) clearTimeout(liveNoticeTimerRef.current);
+      if (liveReloadTimerRef.current) clearTimeout(liveReloadTimerRef.current);
+
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+    };
+  }, []);
+
   const handleStatusChange = async (id, newStatus) => {
     try {
       const res = await fetch(`${API_ADMIN}/api/orders/${id}`, {
@@ -962,6 +1112,47 @@ const Dashboard = ({ onLogout }) => {
 
   return (
     <div className="min-h-screen flex" style={{ background: '#0d0805', fontFamily: "'Lato',sans-serif" }}>
+      <AnimatePresence>
+        {liveNotice && (
+          <motion.div
+            initial={{ opacity: 0, y: -16, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -12, scale: 0.98 }}
+            className="fixed top-4 right-4 z-50 w-[min(24rem,calc(100vw-2rem))] rounded-2xl p-4 shadow-2xl"
+            style={{ background: 'rgba(17,10,7,0.96)', border: '1px solid rgba(255,154,60,0.28)', backdropFilter: 'blur(12px)' }}
+          >
+            <div className="flex items-start gap-3">
+              <div
+                className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: 'linear-gradient(135deg,#c0392b,#e67e22)' }}
+              >
+                <ShoppingBag size={18} className="text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-black tracking-widest uppercase" style={{ color: '#ff9a3c' }}>
+                  New Order
+                </div>
+                <div className="text-white font-black mt-1 truncate">{liveNotice.customer}</div>
+                <div className="text-stone-400 text-xs mt-1">{liveNotice.orderId}</div>
+                <button
+                  onClick={() => { setTab('orders'); setLiveNotice(null); }}
+                  className="mt-3 text-xs font-black tracking-widest uppercase"
+                  style={{ color: '#ff9a3c' }}
+                >
+                  View in Dashboard →
+                </button>
+              </div>
+              <button
+                onClick={() => setLiveNotice(null)}
+                className="text-stone-500 hover:text-stone-300 transition-colors"
+                aria-label="Dismiss new order alert"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── SIDEBAR ── */}
       <aside

@@ -16,6 +16,7 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 8000;
+const WEBHOOK_PATHS = ['/webhook', '/api/webhook'];
 
 const ALLOWED_ORIGINS = [
   'http://localhost:5173',
@@ -26,14 +27,16 @@ const ALLOWED_ORIGINS = [
   'https://graceefaith.com',
 ];
 
-// Webhook requires raw body before JSON middleware
-app.use('/webhook/stripe', express.raw({ type: 'application/json' }));
+// Webhook requires raw body before JSON middleware.
+// Support both the legacy route and the Stripe-dashboard-friendly /api path.
+app.use(WEBHOOK_PATHS, express.raw({ type: 'application/json' }));
 
 app.use(cors({ origin: ALLOWED_ORIGINS, credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 
 // Routes
 app.use('/webhook', webhookRoutes);
+app.use('/api/webhook', webhookRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/orders', orderRoutes);
