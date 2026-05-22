@@ -7,7 +7,22 @@ import OwnerSettings from '../Models/OwnerSettings.mjs';
 import { getOwnerEmails } from '../utils/ownerEmails.mjs';
 
 const resend      = new Resend(process.env.RESEND_API_KEY);
-const FROM_EMAIL  = 'Faith & Grace <onboarding@resend.dev>';
+const FROM_EMAIL  = process.env.EMAIL_FROM || 'Faith & Grace <onboarding@resend.dev>';
+
+const getEmailErrorMessage = (error) => {
+  if (!error) return 'Unknown email error';
+  if (typeof error === 'string') return error;
+  if (error.message) return error.message;
+  return JSON.stringify(error);
+};
+
+const sendEmail = async (payload) => {
+  const { error } = await resend.emails.send(payload);
+
+  if (error) {
+    throw new Error(getEmailErrorMessage(error));
+  }
+};
 
 const getOwnerPasswordHash = async () => {
   const setting = await OwnerSettings.findOne({ key: 'password_hash' });
@@ -65,7 +80,7 @@ export const requestPasswordReset = async (req, res) => {
     if (ownerEmails.length === 0)
       return res.status(500).json({ error: 'Owner email is not configured' });
 
-    await resend.emails.send({
+    await sendEmail({
       from:    FROM_EMAIL,
       to:      ownerEmails,
       subject: 'Password Reset — Faith & Grace Dashboard',

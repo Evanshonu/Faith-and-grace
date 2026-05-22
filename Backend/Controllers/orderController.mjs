@@ -9,7 +9,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const VALID_STATUSES = ['paid', 'preparing', 'ready', 'delivered'];
 const OWNER_PHONE_E164 = process.env.OWNER_PHONE || '18622129328';
 const OWNER_PHONE_DISPLAY = process.env.OWNER_PHONE_DISPLAY || '+1 862-212-9328';
-const FROM_EMAIL = 'Faith & Grace <onboarding@resend.dev>';
+const FROM_EMAIL = process.env.EMAIL_FROM || 'Faith & Grace <onboarding@resend.dev>';
 const OWNER_TEL_LINK = `tel:+${OWNER_PHONE_E164}`;
 const PAYMENT_LOCK_WAIT_MS = 2500;
 const PAYMENT_LOCK_POLL_MS = 250;
@@ -34,6 +34,23 @@ const buildWhatsAppMessage = (order) => {
     `Total: $${order.total.toFixed(2)}`;
 
   return `https://wa.me/${OWNER_PHONE_E164}?text=${encodeURIComponent(message)}`;
+};
+
+const getEmailErrorMessage = (error) => {
+  if (!error) return 'Unknown email error';
+  if (typeof error === 'string') return error;
+  if (error.message) return error.message;
+  return JSON.stringify(error);
+};
+
+const sendEmail = async (payload) => {
+  const { data, error } = await resend.emails.send(payload);
+
+  if (error) {
+    throw new Error(getEmailErrorMessage(error));
+  }
+
+  return data;
 };
 
 export const sendOrderNotifications = async (order) => {
@@ -101,30 +118,34 @@ export const sendOrderNotifications = async (order) => {
     </div>
   `;
 
-  try {
-    if (ownerEmails.length > 0) {
-      await resend.emails.send({
+  if (ownerEmails.length > 0) {
+    try {
+      await sendEmail({
         from: FROM_EMAIL,
         to: ownerEmails,
         subject: `New Order ${order.orderId} - ${order.customer} ($${order.total.toFixed(2)})`,
         html: ownerHtml,
       });
       console.log('Owner email sent');
-    } else {
-      console.warn('Owner email notification skipped: OWNER_EMAIL is not configured');
+    } catch (err) {
+      console.error('Owner email notification failed:', err.message);
     }
+  } else {
+      console.warn('Owner email notification skipped: OWNER_EMAIL is not configured');
+  }
 
-    if (order.email) {
-      await resend.emails.send({
+  if (order.email) {
+    try {
+      await sendEmail({
         from: FROM_EMAIL,
         to: order.email,
         subject: `Order Confirmed - ${order.orderId} | Faith & Grace`,
         html: customerHtml,
       });
       console.log('Customer email sent');
+    } catch (err) {
+      console.error('Customer email notification failed:', err.message);
     }
-  } catch (err) {
-    console.error('Email notification failed:', err.message);
   }
 };
 
@@ -172,7 +193,7 @@ const sendCustomerStatusNotification = async (order, previousStatus) => {
   `;
 
   try {
-    await resend.emails.send({
+    await sendEmail({
       from: FROM_EMAIL,
       to: order.email,
       subject: `${STATUS_EMAIL_SUBJECTS[order.status]} - ${order.orderId} | Faith & Grace`,
