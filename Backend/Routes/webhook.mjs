@@ -1,7 +1,9 @@
 import express from "express";
 import Stripe from "stripe";
-import Order from "../Models/Order.mjs";
-import { sendOrderNotifications } from "../Controllers/orderController.mjs";
+import {
+  createOrFindPaidOrder,
+  sendOrderNotifications,
+} from "../Controllers/orderController.mjs";
 
 const router = express.Router();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -40,29 +42,31 @@ const handleStripeWebhook = async (req, res) => {
   console.log("Payment succeeded:", paymentIntent.id);
 
   try {
-    const existingOrder = await Order.findOne({ paymentId: paymentIntent.id });
-    if (existingOrder) {
-      console.log("Order already exists, skipping");
-      return res.status(200).json({ received: true, duplicate: true });
-    }
-
     let items = [];
     try {
       items = JSON.parse(meta.items || "[]");
     } catch (_) {}
 
-    const order = await Order.create({
-      paymentId: paymentIntent.id,
-      customer: meta.customer_name || "Customer",
-      phone: meta.customer_phone || "",
-      email: meta.customer_email || "",
+    const { order, created, pending } = await createOrFindPaidOrder({
+      customer_name: meta.customer_name || "Customer",
+      customer_phone: meta.customer_phone || "",
+      customer_email: meta.customer_email || "",
       items,
       total: paymentIntent.amount / 100,
       method: meta.method || "pickup",
       address: meta.address || "",
-      status: "paid",
-      stripePaymentIntent: paymentIntent.id,
+      payment_intent_id: paymentIntent.id,
     });
+
+    if (pending) {
+      console.log("Payment is already being processed, skipping duplicate creation");
+      return res.status(200).json({ received: true, pending: true });
+    }
+
+    if (!created) {
+      console.log("Order already exists, skipping");
+      return res.status(200).json({ received: true, duplicate: true });
+    }
 
     emitNewOrder(req, order);
 

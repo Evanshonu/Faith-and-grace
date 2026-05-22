@@ -206,7 +206,7 @@ const SuccessState = () => (
       <CheckCircle size={36} className="text-green-400" />
     </motion.div>
     <h3 className="font-corm text-3xl font-bold text-white mb-2">Payment Successful!</h3>
-    <p className="text-stone-400 text-sm mb-1">Saving your order...</p>
+    <p className="text-stone-400 text-sm mb-1">Finalizing your order...</p>
     <p className="text-stone-600 text-xs">Redirecting to order tracking...</p>
     <div className="mt-6 w-48 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
       <motion.div initial={{ width: '0%' }} animate={{ width: '100%' }} transition={{ duration: 2.5, ease: 'linear' }}
@@ -280,32 +280,6 @@ const Checkout = () => {
 
   const handleSuccess = async paymentIntentId => {
     setSuccess(true);
-
-    try {
-      await fetch(`${API_BASE}/api/orders`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customer_name:     customerInfo.name,
-          customer_phone:    customerInfo.phone,
-          customer_email:    customerInfo.email || '',
-          items:             cart.map(i => ({ name: i.name, qty: i.quantity, price: Number(i.price) })),
-          total:             totalWithTax,
-          method:            customerInfo.method  || 'pickup',
-          address:           customerInfo.address || '',
-          payment_intent_id: paymentIntentId,
-        }),
-      });
-    } catch (err) {
-      console.error('Order save failed:', err);
-    }
-
-    localStorage.setItem('savedCustomer', JSON.stringify({
-      name: customerInfo.name, phone: customerInfo.phone || '', email: customerInfo.email || '',
-    }));
-    localStorage.removeItem('customerInfo');
-    localStorage.removeItem('pendingOrderCart');
-    localStorage.removeItem('pendingOrderTotal');
 
     clearCart();
 

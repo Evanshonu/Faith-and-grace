@@ -1,9 +1,22 @@
 import 'dotenv/config';
 import Stripe from "stripe";
-import Order from "../Models/Order.mjs";
-import { sendOrderNotifications } from "./orderController.mjs";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const RESTAURANT_NAME = process.env.RESTAURANT_NAME || 'Faith & Grace';
+
+const buildReceiptDescription = ({ items = [], method = 'pickup' }) => {
+  const itemSummary = items
+    .slice(0, 2)
+    .map(item => `${item.name} x${item.qty}`)
+    .join(', ');
+
+  const methodLabel = method === 'delivery' ? 'Delivery' : 'Pickup';
+  const base = `${RESTAURANT_NAME} order - ${methodLabel}`;
+
+  if (!itemSummary) return base;
+
+  return `${base} - ${itemSummary}`.slice(0, 200);
+};
 
 export const getStripeConfig = (req, res) => {
   res.json({ publishableKey: process.env.STRIPE_PUBLISHABLE_KEY });
@@ -22,6 +35,8 @@ export const createPaymentIntent = async (req, res) => {
     const paymentIntent = await stripe.paymentIntents.create({
       amount:   Math.round(Number(amount) * 100),
       currency: "usd",
+      description: buildReceiptDescription({ items, method }),
+      ...(customer_email ? { receipt_email: customer_email } : {}),
       metadata: {
         customer_name:  customer_name  || "",
         customer_email: customer_email || "",

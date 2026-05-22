@@ -53,32 +53,6 @@ const OrderConfirmation = () => {
           if (res.ok) foundOrder = await res.json();
         } catch {}
 
-        if (!foundOrder) {
-          const customerInfo = JSON.parse(localStorage.getItem('customerInfo') || '{}');
-          const items        = JSON.parse(localStorage.getItem('pendingOrderCart') || '[]');
-          const total        = parseFloat(localStorage.getItem('pendingOrderTotal') || '0');
-
-          if (items.length > 0 && customerInfo.name) {
-            try {
-              const res = await fetch(`${API_BASE}/api/orders`, {
-                method:  'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  customer_name:     customerInfo.name    || 'Guest',
-                  customer_phone:    customerInfo.phone   || 'N/A',
-                  customer_email:    customerInfo.email   || '',
-                  items,
-                  total,
-                  method:            customerInfo.method  || 'pickup',
-                  address:           customerInfo.address || '',
-                  payment_intent_id: paymentIntent,
-                }),
-              });
-              if (res.ok) foundOrder = await res.json();
-            } catch (err) { console.error('Order save failed:', err); }
-          }
-        }
-
         const customerInfo = JSON.parse(localStorage.getItem('customerInfo') || '{}');
         if (customerInfo.name) {
           localStorage.setItem('savedCustomer', JSON.stringify({
@@ -176,6 +150,16 @@ const OrderConfirmation = () => {
             </div>
 
             {/* Order details */}
+            {!order && (
+              <div className="rounded-3xl p-6"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <div className="text-xs font-black tracking-widest uppercase text-stone-500 mb-3">Finalizing Order</div>
+                <p className="text-stone-400 text-sm">
+                  Your payment was approved. We are syncing your order with the kitchen right now.
+                </p>
+              </div>
+            )}
+
             {order && (
               <div className="rounded-3xl p-6"
                 style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>

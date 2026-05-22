@@ -4,6 +4,7 @@ import bcrypt       from 'bcryptjs';
 import crypto       from 'crypto';
 import { Resend }  from 'resend';
 import OwnerSettings from '../Models/OwnerSettings.mjs';
+import { getOwnerEmails } from '../utils/ownerEmails.mjs';
 
 const resend      = new Resend(process.env.RESEND_API_KEY);
 const FROM_EMAIL  = 'Faith & Grace <onboarding@resend.dev>';
@@ -59,10 +60,14 @@ export const requestPasswordReset = async (req, res) => {
     );
 
     const resetLink = `${process.env.SITE_URL}/owner?reset=${token}`;
+    const ownerEmails = getOwnerEmails();
+
+    if (ownerEmails.length === 0)
+      return res.status(500).json({ error: 'Owner email is not configured' });
 
     await resend.emails.send({
       from:    FROM_EMAIL,
-      to:      process.env.OWNER_EMAIL,
+      to:      ownerEmails,
       subject: 'Password Reset — Faith & Grace Dashboard',
       html: `
         <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:32px;background:#1a0f0a;border-radius:16px;">
