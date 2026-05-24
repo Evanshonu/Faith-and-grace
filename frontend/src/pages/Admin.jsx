@@ -929,6 +929,7 @@ const Dashboard = ({ onLogout }) => {
   const liveNoticeTimerRef = useRef(null);
   const liveReloadTimerRef = useRef(null);
   const socketErrorLoggedRef = useRef(false);
+  const ordersLoadInFlightRef = useRef(false);
 
   const token = localStorage.getItem('fg_admin_token');
   const authH = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
@@ -945,11 +946,15 @@ const Dashboard = ({ onLogout }) => {
     };
 
     const loadOrders = async () => {
+      if (ordersLoadInFlightRef.current) return;
+
+      ordersLoadInFlightRef.current = true;
       try {
         const res = await fetch(`${API_ADMIN}/api/orders`, { headers: authH });
         const data = await res.json();
         setOrders(Array.isArray(data) ? data : []);
       } catch (err) { console.error('Orders load failed:', err); }
+      finally { ordersLoadInFlightRef.current = false; }
     };
 
     loadMenu();
@@ -1007,11 +1012,15 @@ const Dashboard = ({ onLogout }) => {
   };
 
   const reloadOrders = async () => {
+    if (ordersLoadInFlightRef.current) return;
+
+    ordersLoadInFlightRef.current = true;
     try {
       const res = await fetch(`${API_ADMIN}/api/orders`, { headers: authH });
       const data = await res.json();
       if (Array.isArray(data)) setOrders(data);
     } catch (err) { console.error('Orders reload failed:', err); }
+    finally { ordersLoadInFlightRef.current = false; }
   };
 
   useEffect(() => {

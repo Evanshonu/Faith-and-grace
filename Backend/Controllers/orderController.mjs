@@ -119,16 +119,18 @@ export const sendOrderNotifications = async (order) => {
   `;
 
   if (ownerEmails.length > 0) {
-    try {
-      await sendEmail({
-        from: FROM_EMAIL,
-        to: ownerEmails,
-        subject: `New Order ${order.orderId} - ${order.customer} ($${order.total.toFixed(2)})`,
-        html: ownerHtml,
-      });
-      console.log('Owner email sent');
-    } catch (err) {
-      console.error('Owner email notification failed:', err.message);
+    for (const ownerEmail of ownerEmails) {
+      try {
+        await sendEmail({
+          from: FROM_EMAIL,
+          to: ownerEmail,
+          subject: `New Order ${order.orderId} - ${order.customer} ($${order.total.toFixed(2)})`,
+          html: ownerHtml,
+        });
+        console.log(`Owner email sent: ${ownerEmail}`);
+      } catch (err) {
+        console.error(`Owner email notification failed for ${ownerEmail}:`, err.message);
+      }
     }
   } else {
       console.warn('Owner email notification skipped: OWNER_EMAIL is not configured');
